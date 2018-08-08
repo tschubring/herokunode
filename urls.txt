@@ -3,6 +3,9 @@ https://sleepy-taiga-39265.herokuapp.com/
 http://localhost:5000/
 Created papertrail-closed-86795 as PAPERTRAIL_API_TOKEN
 Created postgresql-angular-35490 as DATABASE_URL
+postgres://fdhnjjxenmrtbl:66eb82d538a2f1f0e623657c571b7a6a7a175a234065a4a3fa94e26eb58e96c6@ec2-54-227-241-179.compute-1.amazonaws.com:5432/dfv16qht4jj8kv
+
+
 pdb@Ins3cur3!
 
 

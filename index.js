@@ -5,12 +5,14 @@ const path = require('path')
 const PORT = process.env.PORT || 5000
 
 const { Pool } = require('pg')
-const DBU ='postgres://fdhnjjxenmrtbl:66eb82d538a2f1f0e623657c571b7a6a7a175a234065a4a3fa94e26eb58e96c6@ec2-54-227-241-179.compute-1.amazonaws.com:5432/dfv16qht4jj8kv'
+const envUrl=process.env.DATABASE_URL;
+const dbUrl ='postgres://fdhnjjxenmrtbl:66eb82d538a2f1f0e623657c571b7a6a7a175a234065a4a3fa94e26eb58e96c6@ec2-54-227-241-179.compute-1.amazonaws.com:5432/dfv16qht4jj8kv'
 const pool = new Pool({
-  connectionString: DBU,
+  connectionString: envUrl,
   ssl: true
 })
-      console.log("DB "+ DBU);
+      console.log("dbUrl "+ dbUrl);
+      console.log("envUrl "+ envUrl);
 //process.env.DATABASE_URL
 
 
@@ -33,8 +35,8 @@ express()
   try {
       const client = await pool.connect();
       const result = await client.query('SELECT * FROM test_table');
-      //res.render('pages/db', result.rows);
-      res.send(result)
+      res.render('pages/db', result);
+      //res.send(result)
       client.release();
     } catch (err) {
       console.error(err);
