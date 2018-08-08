@@ -1,20 +1,32 @@
 
 const cool = require('cool-ascii-faces')
 const express = require('express')
+
+
 const path = require('path')
 const PORT = process.env.PORT || 5000
-
 const { Pool } = require('pg')
-const envUrl=process.env.DATABASE_URL;
+const envUrl=process.env.DATABASE_URL
 const dbUrl ='postgres://fdhnjjxenmrtbl:66eb82d538a2f1f0e623657c571b7a6a7a175a234065a4a3fa94e26eb58e96c6@ec2-54-227-241-179.compute-1.amazonaws.com:5432/dfv16qht4jj8kv'
 const pool = new Pool({
-  connectionString: envUrl,
+  connectionString: dbUrl,
   ssl: true
 })
       console.log("dbUrl "+ dbUrl);
       console.log("envUrl "+ envUrl);
-//process.env.DATABASE_URL
 
+
+//var app = require('express')()
+var http = require('http').Server(express)
+var io = require('socket.io')(http)
+
+io.on('connection', function(socket){
+  console.log('a user connected');
+});
+
+http.listen(3000, function(){
+  console.log('listening on *:3000');
+});
 
 express()
   .use(express.static(path.join(__dirname, 'public')))
