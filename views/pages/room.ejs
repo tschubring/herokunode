@@ -36,11 +36,12 @@
 <script>
 function init(){
   console.log('init()');
+jQuery('#qrcode').qrcode(clientUrl);
+
 }
 var clientUrl=window.location.href.replace("room","client")+"?roomId="+myRoomId;
 document.write('<a href="'+clientUrl+'" target="_blank">'+clientUrl+'</a>');
-  jQuery('#qrcode').qrcode(clientUrl);
-</script>
+  </script>
 <h2>Room <%= rows[0].id %> Created</h2>
 
 <ul>

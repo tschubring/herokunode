@@ -30,6 +30,7 @@
   }
 var sendTime=0;
 function emitTick(){
+  console.log('emitTick()');
   sendTime=new Date().getTime();
   socket.emit("clientState", { room: "room_"+myRoomId, userId:52});
 }
@@ -43,7 +44,7 @@ function emitTick(){
 
 </script>
 <h2>User <%= rows[0].name %> Created</h2>
-<button onclick="emitTick">emitTick</button>
+<button onclick="emitTick()">emitTick</button>
 <ul>
     <% rows.forEach(function(r) { %>
         <li><%= r.id %> - <%= JSON.stringify(r) %></li>
