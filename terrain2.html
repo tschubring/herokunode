@@ -34,8 +34,6 @@ var helpers=false;
     var control;
 
 window.onload = init;
-var minVal=1000;
-var maxVal=0;
 var boats=[];
 function generateIsland(ctx, across){
   var r0=rnd(1000)/1000;
@@ -465,9 +463,6 @@ function calcColor(val){
   var r=Math.floor(128*(Math.cos(val*pi/13)+1));
   var g=Math.floor(128*(Math.cos(val*pi/17)+1));
   var b=Math.floor(128*(Math.cos(val*pi/7)+1));
-  if(val<minVal){minVal=val;}
-  if(val>maxVal){maxVal=val;}
-  //val=128;
   var color = new THREE.Color("rgb("+val+","+Math.floor(128+val/2)+","+(val)+")");
   //var color = new THREE.Color("rgb("+r+","+g+","+b+")");
   

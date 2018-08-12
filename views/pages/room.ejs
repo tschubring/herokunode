@@ -9,29 +9,326 @@
 <script src="/socket.io/socket.io.js"></script>
     <script src="libs/three.min.js"></script>
     <script src="libs/OBJLoader.js"></script>
+    <script src="libs/display.js"></script>
 
 <script>
-  var socket = io.connect();
-  var myRoomId=<%= rows[0].id %>;
-  console.log('room.ejs myRoomId='+myRoomId);
-  if(myRoomId != -1){
-
+var socket = io.connect();
+var myRoomId=<%= rows[0].id %>;
+console.log('room.ejs myRoomId='+myRoomId);
+if(myRoomId != -1){
     socket.emit("subscribeRoom", { room: "room_"+myRoomId, userId:-1});
-
     socket.on("subscribeClientServer", function(data) {
-      console.log("room on subscribeClientServer ");
-      console.log(data);
-    });
-    socket.on('clientState', function(data) {
-     console.log("client.ejs clientState");
-     console.log(data);
-     socket.emit("roomState", { room: "room_"+myRoomId });
-   })
+    console.log("room on subscribeClientServer ");
+    console.log(data);
+  });
+  socket.on('clientState', function(data) {
+    console.log("client.ejs clientState");
+    console.log(data);
+    socket.emit("roomState", { room: "room_"+myRoomId });
+  })
+}
+// begin copied from terrain2
+var pi=Math.PI;
+var useSize=512;
+var dist=useSize/2;
+var heightOffset=8;
+var heightMap=[];
+var mode="server";
+var renderer;
+var scene;
+var camera;
+var control;
+var minVal=1000;
+var maxVal=0;
+var boats=[];
 
+
+function tick(){
+  for (var b=0; b<boats.length; b++){
+    if(boats[b].loaded){
+
+      var half=useSize/2;
+
+      // loop physics cycles?
+      boats[b].iRads+=boats[b].control;
+      boats[b].pitch=boats[b].iRads;
+      boats[b].x+=xRadiansScale(boats[b].iRads, boats[b].speed);
+      boats[b].z-=yRadiansScale(boats[b].iRads, boats[b].speed);
+  
+      var carY=worldAlt(boats[b].x, boats[b].z);
+  var frontX=boats[b].x+xRadiansScale(boats[b].iRads, 3);
+  var frontZ=boats[b].z-yRadiansScale(boats[b].iRads, 3);
+  var frontY=worldAlt(frontX, frontZ);
+
+  var backX=boats[b].x+xRadiansScale(boats[b].iRads-pi, 3);
+  var backZ=boats[b].z-yRadiansScale(boats[b].iRads-pi, 3);
+  var backY=worldAlt(backX, backZ);
+  var leftX=boats[b].x+xRadiansScale(boats[b].iRads+pi/2, 1.5);
+  var leftZ=boats[b].z-yRadiansScale(boats[b].iRads+pi/2, 1.5);
+  var leftY=worldAlt(leftX, leftZ);
+  var rightX=boats[b].x+xRadiansScale(boats[b].iRads-pi/2, 1.5);
+  var rightZ=boats[b].z-yRadiansScale(boats[b].iRads-pi/2, 1.5);
+  var rightY=worldAlt(rightX, rightZ);
+
+  //dbug("x:"+x+" . "+xFrac+" Z: "+z+" . "+zFrac+ " carY:"+Math.floor(carY*10)/10+" = "+Math.floor(cnw*100)/100+" "+Math.floor(cne*100)/100+" "+Math.floor(csw*100)/100+" "+Math.floor(cse*100)/100+" "+Math.floor(cSum*100)/100);
+  
+      var carSize=.5;
+      boats[b].carYaw.position.x=boats[b].x;
+      boats[b].carYaw.position.z=boats[b].z;
+      boats[b].carYaw.position.y=carY+carSize;
+      boats[b].carYaw.rotation.y=boats[b].iRads;
+      boats[b].carRoll.rotation.x=leftY/5-rightY/5;
+      boats[b].carPitch.rotation.z=frontY/8-backY/8;
+      boats[b].model.rotation.x=leftY/5-rightY/5;
+      if(mode != "server"){
+        var camVec=boats[0].iRads-pi;
+        camera.position.x = boats[0].x+xRadiansScale(camVec,camDist);
+        camera.position.y = carY+camDist/2-4;
+        camera.position.z = boats[0].z-yRadiansScale(camVec,camDist);
+        camera.lookAt(boats[0].carYaw.position);
+      }
+    }
   }
-//socket.emit("subscribe", { room: "room_"+myRoomId, userId:-1});
+}
+
+//boats.push(newBoat({num:0, loaded:false, local:true, x:0, y:0, speed:0, pitch:0, iRads:0}));
+function newBoat(conf){
+  var trans=new THREE.MeshPhongMaterial({"emissive":new THREE.Color("rgb(32,32,32)"), "color":new THREE.Color("rgb(255,255,0)"), "opacity":.5,   "transparent":true});
+  var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+
+  var carRoll  = new THREE.Mesh( geometry, trans );
+  var geometry = new THREE.CubeGeometry( 5,5,5 );
+  carPitch = new THREE.Object3D();
+  carPitch.add(carRoll);
+  carYaw = new THREE.Object3D();
+  carYaw.add(carPitch);
+  scene.add(carYaw);
+  conf.carRoll=carRoll;
+  conf.carRoll=carRoll;
+  conf.carPitch=carPitch;
+  conf.carYaw=carYaw;
+
+
+       var loader = new THREE.OBJLoader();
+       loader.load('libs/airboat.obj',  function ( object ) {
+          //console.log("boatNum "+boatNum);
+
+          boat=object;
+          var boatLoaded=true;
+          //console.log(piece);
+        
+          boat.scale.x=.4;
+          boat.scale.y=.4;
+          boat.scale.z=.4;
+          boat.position.y=.7;
+          //piece.rotation.y=0;
+          for(var bc=0; bc<boat.children.length; bc++){
+            boat.children[bc].material.color.r=.75;
+            boat.children[bc].material.color.g=.5;
+            boat.children[bc].material.color.b=.5;
+          }
+          boats[0].carRoll.add(boat);
+          boats[0].model=boat;
+          boats[0].loaded=true;
+          
+
+        });
+
+  return conf;
+}
+
+function dbug(str){
+  document.getElementById('debug').style.display="block";
+  document.getElementById('debug').innerHTML=str;
+}
+function rnd(range){
+  return Math.floor(Math.random()*range);
+}  
+
+
+function initScene() {
+  // create a scene, that will hold all our elements such as objects, cameras and lights.
+  scene = new THREE.Scene();
+  // create a camera, which defines where we're looking at.
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+  // create a render, sets the background color and the size
+  renderer = new THREE.WebGLRenderer();
+  renderer.setClearColor(0x000000, 1.0);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  // add light
+  var light = new THREE.DirectionalLight();
+  light.position.set(1200, 1200, 1200);
+  scene.add(light);
+  var alight = new THREE.AmbientLight( 0x808080 ); // soft white light
+  scene.add( alight );
+  // position and point the camera to the center of the scene
+  camera.position.x = 0;
+  camera.position.y = 640;
+  camera.position.z = 0;
+  camera.lookAt(scene.position);
+  // add the output of the renderer to the html element
+  document.body.appendChild(renderer.domElement);
+
+  //boats.push(newBoat({num:0, loaded:false, local:true, x:0, z:0, speed:1, pitch:0, iRads:0, control:-.01}));
+  createGeometryFromMap();
+  // call the render function
+  render();
+
+  //window.setTimeout("window.location.reload()",60000);
+}
+function createGeometryFromMap() {
+  var depth = useSize;
+  var width = useSize;
+  var spacingX = 1;
+  var spacingZ = 1;
+  var canvas = document.createElement('canvas');
+  canvas.width = useSize;
+  canvas.height = useSize;
+  var ctx = canvas.getContext('2d');
+
+
+
+        //"libs/grandcanyon.png";
+            // draw on canvas
+            //ctx.drawImage(img, 0, 0);
+            generateIsland(ctx,useSize);
+            var pixel = ctx.getImageData(0, 0, width, depth);
+            var geom = new THREE.Geometry;
+            var output = [];
+            for (var x = 0; x < depth; x++) {
+                var row=[];
+                for (var z = 0; z < width; z++) {
+                    // get pixel
+                    var roadWidth=48;
+                    var roadThresh=2;
+                    // since we're grayscale, we only need one element
+                    var yValue = pixel.data[z * 4 + (depth * x * 4)] / heightOffset;
+
+                    if((yValue >15)&&(yValue<16.5)&&((x/2)%roadWidth>roadThresh)&&((z/2)%roadWidth>roadThresh)){yValue+=heightOffset/3;}
+                    if(((x/2)%roadWidth<=roadThresh)||((z/2)%roadWidth<=roadThresh)){
+                      if(yValue>15){
+                        yValue=Math.floor(yValue/2)*2;
+                      }
+                      else{
+                        yValue*=.97;
+                      }
+                    }
+
+
+                    row.push(yValue);
+
+                    var vertex = new THREE.Vector3(x * spacingX, yValue, z * spacingZ);
+                    geom.vertices.push(vertex);
+
+                    //var geometry = new THREE.SphereGeometry( .05, 8, 8 );
+                    //var material = new THREE.MeshBasicMaterial( {color: 0x0000ff} );
+                    //var temp  = new THREE.Mesh( geometry, material );
+                    //temp.position.x=x-useSize/2+.5;
+                    //temp.position.z=z-useSize/2+.5;
+                    //temp.position.y=yValue;
+                    //scene.add( temp );
+
+                }
+                heightMap.push(row);
+            }
+            // we create a rectangle between four vertices, and we do
+            // that as two triangles.
+            for (var z = 0; z < depth - 1; z++) {
+                
+                for (var x = 0; x < width - 1; x++) {
+                    // we need to point to the position in the array
+                    // a - - b
+                    // |  x  |
+                    // c - - d
+                    var a = x + z * width;
+                    var b = (x + 1) + (z * width);
+                    var c = x + ((z + 1) * width);
+                    var d = (x + 1) + ((z + 1) * width);
+                    var face1 = new THREE.Face3(a, b, d);
+                    var face2 = new THREE.Face3(d, c, a);
+                    face1.color = calcColor(Math.floor(heightOffset*getHighPoint(geom, face1)));
+                    face2.color = calcColor(Math.floor(heightOffset*getHighPoint(geom, face2)));
+                    geom.faces.push(face1);
+                    geom.faces.push(face2);
+                }
+            }
+            geom.computeVertexNormals(true);
+            geom.computeFaceNormals();
+            geom.computeBoundingBox();
+            var zMax = geom.boundingBox.max.z;
+            var xMax = geom.boundingBox.max.x;
+            var mesh = new THREE.Mesh(geom, new THREE.MeshLambertMaterial({
+                vertexColors: THREE.FaceColors,
+                color: 0x666666,
+                shading: THREE.NoShading
+            }));
+            mesh.translateX(-xMax / 2);
+            mesh.translateZ(-zMax / 2);
+            scene.add(mesh);
+            mesh.name = 'valley';
+
+
+
+
+
+}
+function getHighPoint(geometry, face) {
+  var v1 = geometry.vertices[face.a].y;
+  var v2 = geometry.vertices[face.b].y;
+  var v3 = geometry.vertices[face.c].y;
+  return Math.max(v1, v2, v3);
+}
+function render() {
+  tick();
+  renderer.render(scene, camera);
+  requestAnimationFrame(render);
+}
+function worldAlt(worldX,worldZ){
+  var half=useSize/2;
+  var a=0;
+  var z=Math.floor(worldZ+half-.5);
+  var x=Math.floor(worldX+half-.5);
+  //console.log(x+" "+z);
+  if((x<0)||(x>=useSize-1)||(z<0)||(z>=useSize-1)){return a;}
+  var xFrac=(worldX+half-.5)-x; // excursion from nw
+  var zFrac=(worldZ+half-.5)-z;
+  var xInv=1-xFrac;
+  var zInv=1-zFrac;
+  var nw=heightMap[x][z];
+  var ne=heightMap[x+1][z];
+  var sw=heightMap[x][z+1];
+  var se=heightMap[x+1][z+1];
+        var dnw=Math.sqrt(xFrac*xFrac+zFrac*zFrac);
+  var dne=Math.sqrt(xInv*xInv+zFrac*zFrac);
+  var dsw=Math.sqrt(xFrac*xFrac+zInv*zInv);
+  var dse=Math.sqrt(xInv*xInv+zInv*zInv);
+        if(dnw>1){dnw=1};
+  if(dne>1){dne=1};
+  if(dsw>1){dsw=1};
+  if(dse>1){dse=1};
+  var cnw=1-dnw;
+  var cne=1-dne;
+  var csw=1-dsw;
+  var cse=1-dse;
+  var cSum=cnw+cne+csw+cse;
+  a=(nw*(cnw/cSum)+ne*(cne/cSum)+sw*(csw/cSum)+se*(cse/cSum));
+   return a;
+}
+function calcColor(val){
+  var r=Math.floor(128*(Math.cos(val*pi/13)+1));
+  var g=Math.floor(128*(Math.cos(val*pi/17)+1));
+  var b=Math.floor(128*(Math.cos(val*pi/7)+1));
+  var color = new THREE.Color("rgb("+val+","+Math.floor(128+val/2)+","+(val)+")");
+  //var color = new THREE.Color("rgb("+r+","+g+","+b+")");
+  
+  if(val==0){
+    color = new THREE.Color("rgb(0,0,200)");
+  }
+  return color;
+}
+
 </script>
-<body onload="init()">
+<body onload="init();">
 
 <% include ../partials/nav.ejs %>
 
@@ -40,7 +337,7 @@
 function init(){
   console.log('init()');
 jQuery('#qrcode').qrcode(clientUrl);
-
+  initScene();
 }
 var clientUrl=window.location.href.replace("room","client")+"?roomId="+myRoomId;
 document.write('<a href="'+clientUrl+'" target="_blank">'+clientUrl+'</a>');
@@ -54,6 +351,7 @@ document.write('<a href="'+clientUrl+'" target="_blank">'+clientUrl+'</a>');
 </ul>
 
 <div id="qrcode"></div>
+<div id="debug" >DEBUG</div>
 </div>
 
 </body>
