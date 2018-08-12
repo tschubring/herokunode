@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<script>
+function rnd(range){
+  return Math.floor(Math.random()*range);
+}  
+function init(){
+  var r0=rnd(1000)/1000;
+  var r1=rnd(1000)/1000;
+  var r2=rnd(1000)/1000;
+  var r3=rnd(1000)/1000;
+  var r4=rnd(1000)/1000;
+  var r5=rnd(1000)/1000;
+  var xSkew=rnd(1000)/2000-.25;
+  var ySkew=rnd(1000)/2000-.25;
+
+  var canv=document.getElementById('mapcanvas');
+  var ctx=canv.getContext('2d');
+  var px=2;
+  var cells=256;
+  var round=1;
+  var across=cells*px;
+  canv.width=across;
+  canv.height=across;
+  var pi=Math.PI;
+
+  var scale=48+rnd(96);
+  var scale1=24+rnd(48);
+  var scale2=12+rnd(24);
+  document.getElementById('debugDiv').innerHTML="scale:"+scale+" "+scale1;
+  for(var x=0; x<cells*px; x+=px){
+    for(var y=0; y<cells*px; y+=px){
+      var xFrac=.5-Math.cos(2*pi*x/across)/2;
+      var yFrac=.5-Math.cos(2*pi*y/across)/2;
+      //var xFrac=Math.sin(pi*x/across);
+      //var yFrac=Math.sin(pi*y/across);
+      var shapeFrac=Math.sin((y*xSkew+x+across/2)/(scale+scale*r1))/2+Math.cos((x*ySkew+y+across/2)/(scale+scale*r0))/2+1;
+
+      var terrainFrac=Math.sin((y*ySkew+x+across/2)/(scale1+scale1*r3))/2+Math.cos((x*xSkew+y+across/2)/(scale1+scale1*r2))/2+.75;
+      var noiseFrac=Math.sin((x+across/2)/(scale2+scale2*r5))/4+Math.cos((y+across/2)/(scale2+scale2*r4))/4+1;
+      
+      var val=Math.floor(256*yFrac*xFrac*shapeFrac*terrainFrac*noiseFrac/round)*round;
+      if(val>255){
+        var over=val-255;
+        val=255-over;
+      }
+      if(val<0){
+        val=0;
+      }
+      //var val=Math.floor(256*xFrac*yFrac);
+      if(val>0){
+        ctx.fillStyle="rgb("+val+","+val+","+val+")";
+      }
+      else{
+        ctx.fillStyle="rgb(0,0,255)";
+      }
+      ctx.fillRect(x,y,px,px);
+      }
+  }
+  window.setTimeout("init()", 1000);
+}
+</script>
+</head>
+<body onload="init()" style="background-color:#666;">
+<canvas id="mapcanvas"></canvas>
+<div id="debugDiv" style="color:white"></div>
+</body>
+</html>

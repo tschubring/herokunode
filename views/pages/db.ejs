@@ -13,7 +13,7 @@
 
 <ul>
     <% rows.forEach(function(r) { %>
-        <li><%= r.id %> - <%= r.name %></li>
+        <li><%= r.id %> - <%= JSON.stringify(r) %></li>
     <% }); %>
 </ul>
 

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var srch=window.location.search.replace("?", "");
+  var sets=srch.split("&");
+  var myRoomId=-1;
+  var myUserId=<%= rows[0].id %>;
+  var socket = io.connect();
+  for (var s=0; s<sets.length; s++){
+    var parts=sets[s].split("=");
+    if(parts[0]=="roomId"){myRoomId=parts[1];}
+  }
+  console.log('client.ejs myRoomId='+myRoomId);
+  if(myRoomId != -1){
+
+    socket.emit("subscribeClient", { room: "room_"+myRoomId, userId: myUserId});
+
+    socket.on('roomState', function(data) {
+      console.log("client.ejs roomState");
+      var nowTime=new Date().getTime();
+      console.log((nowTime-sendTime)+"ms");
+      console.log(data);
+   
+    })
+
+  }
+var sendTime=0;
+function emitTick(){
+  sendTime=new Date().getTime();
+  socket.emit("clientState", { room: "room_"+myRoomId, userId:52});
+}
+</script>
+<body>
+
+<% include ../partials/nav.ejs %>
+
+<div class="container">
+<script>
+
+</script>
+<h2>User <%= rows[0].name %> Created</h2>
+
+<ul>
+    <% rows.forEach(function(r) { %>
+        <li><%= r.id %> - <%= JSON.stringify(r) %></li>
+    <% }); %>
+</ul>
+
+</div>
+
+</body>
+</html>

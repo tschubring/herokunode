@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+
+<script src="/jq/jquery-min.js"></script>
+<script src="/jq/jquery.qrcode.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io.connect();
+  var myRoomId=<%= rows[0].id %>;
+  console.log('room.ejs myRoomId='+myRoomId);
+  if(myRoomId != -1){
+
+    socket.emit("subscribeRoom", { room: "room_"+myRoomId, userId:-1});
+
+    socket.on("subscribeClientServer", function(data) {
+      console.log("room on subscribeClientServer ");
+      console.log(data);
+    });
+    socket.on('clientState', function(data) {
+     console.log("client.ejs clientState");
+     console.log(data);
+     socket.emit("roomState", { room: "room_"+myRoomId });
+   })
+
+  }
+//socket.emit("subscribe", { room: "room_"+myRoomId, userId:-1});
+</script>
+<body onload="init()">
+
+<% include ../partials/nav.ejs %>
+
+<div class="container">
+<script>
+function init(){
+  console.log('init()');
+  jQuery('#qrcode').qrcode("https://www.jambots.com/apps/web/partyqueue/client.html?roomId="+myRoomId);
+}
+var clientUrl=window.location.href.replace("room","client")+"?roomId="+myRoomId;
+document.write('<a href="'+clientUrl+'" target="_blank">'+clientUrl+'</a>');
+</script>
+<h2>Room <%= rows[0].id %> Created</h2>
+
+<ul>
+    <% rows.forEach(function(r) { %>
+        <li><%= r.id %> - <%= JSON.stringify(r) %></li>
+    <% }); %>
+</ul>
+
+<div id="qrcode"></div>
+</div>
+
+</body>
+</html>

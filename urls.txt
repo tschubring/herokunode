@@ -10,3 +10,10 @@ pdb@Ins3cur3!
 
 
 Created postgresql-elliptical-51437 as HEROKU_POSTGRESQL_CRIMSON_URL
+
+
+CREATE TABLE test_users(
+   id SERIAL PRIMARY KEY,
+   name VARCHAR NOT NULL,
+   playlist VARCHAR NOT NULL
+);
