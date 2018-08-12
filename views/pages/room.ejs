@@ -36,10 +36,10 @@
 <script>
 function init(){
   console.log('init()');
-  jQuery('#qrcode').qrcode("https://www.jambots.com/apps/web/partyqueue/client.html?roomId="+myRoomId);
 }
 var clientUrl=window.location.href.replace("room","client")+"?roomId="+myRoomId;
 document.write('<a href="'+clientUrl+'" target="_blank">'+clientUrl+'</a>');
+  jQuery('#qrcode').qrcode(clientUrl);
 </script>
 <h2>Room <%= rows[0].id %> Created</h2>
 
