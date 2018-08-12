@@ -22,7 +22,7 @@
     socket.on('roomState', function(data) {
       console.log("client.ejs roomState");
       var nowTime=new Date().getTime();
-      console.log((nowTime-sendTime)+"ms");
+      document.getElementById('network').innerHTML+=(nowTime-sendTime)+"ms<br>";
       console.log(data);
    
     })
@@ -43,13 +43,13 @@ function emitTick(){
 
 </script>
 <h2>User <%= rows[0].name %> Created</h2>
-
+<button onclick="emitTick">emitTick</button>
 <ul>
     <% rows.forEach(function(r) { %>
         <li><%= r.id %> - <%= JSON.stringify(r) %></li>
     <% }); %>
 </ul>
-
+<div id="network"></div>
 </div>
 
 </body>
