@@ -4,6 +4,9 @@
   <% include ../partials/header.ejs %>
 </head>
 <script src="/socket.io/socket.io.js"></script>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OBJLoader.js"></script>
+    <script src="libs/display.js"></script>
 <script>
   var srch=window.location.search.replace("?", "");
   var sets=srch.split("&");
@@ -16,26 +19,243 @@
   }
   console.log('client.ejs myRoomId='+myRoomId);
   if(myRoomId != -1){
-
     socket.emit("subscribeClient", { room: "room_"+myRoomId, userId: myUserId});
 
-    socket.on('roomState', function(data) {
-      console.log("client.ejs roomState");
-      var nowTime=new Date().getTime();
-      document.getElementById('network').innerHTML+=(nowTime-sendTime)+"ms<br>";
-      console.log(data);
-   
-    })
-
-  }
-var sendTime=0;
-function emitTick(){
-  console.log('emitTick()');
-  sendTime=new Date().getTime();
-  socket.emit("clientState", { room: "room_"+myRoomId, userId:52});
+  socket.on('roomState', function(data) {
+    if(runnable){
+    //console.log("client.ejs roomState");
+    //console.log(data);
+    var userIds=[];
+    for (var b=0; b<boats.length; b++){
+      userIds.push(boats[b].userId);
+    }
+    
+    for(var u=0; u<data.users.length; u++){
+      var user=data.users[u];
+      if(userIds.indexOf(user.userId)==-1){
+        console.log("client.ejs roomState create "+boats.length+" "+runnable);
+        user.num=boats.length;
+        boats.push(newBoat(user));
+      }
+      else{
+        if(user.userId != myUserId){
+          var ord=userIds.indexOf(user.userId);
+          //dbug(ord);
+          if(boats[ord].loaded){
+            boats[ord].iRads=user.iRads;
+            boats[ord].control=user.control;
+            boats[ord].pitch=user.pitch;
+            boats[ord].speed=user.speed;
+            boats[ord].x=user.x;
+            boats[ord].z=user.z;
+          }
+        }
+      }
+    }
+    }
+  });
+  socket.on('haveMap', function(data) {
+    if(mapReceived==false){
+      console.log("client.ejs haveMap");
+      mapReceived=true;
+      var mapData=data.map;
+      saveMap=mapData;
+      canvas = document.createElement('canvas');
+      canvas.width = useSize;
+      canvas.height = useSize;
+      myImage = new Image();
+      document.body.appendChild(myImage);
+      myImage.onload=function(){
+        console.log('myImage onload');
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(myImage, 0, 0);
+        initScene();
+      }
+      myImage.src = mapData;
+    }
+  });
 }
+var saveMap="";
+var mapReceived=false;
+var sendTime=0;
+var tickTimeout;
+function emitTick(){
+  window.clearTimeout(tickTimeout);
+  //console.log('emitTick()');
+  var dataObj={
+    room: "room_"+myRoomId,
+    userId:myUserId,
+    control:boats[0].control,
+    iRads:boats[0].iRads,
+    loaded:false,
+    local:false,
+    pitch:boats[0].pitch,
+    speed:boats[0].speed,
+    x:boats[0].x,
+    z:boats[0].z
+  }  
+  //console.log(dataObj);
+  socket.emit("clientState", dataObj);  
+  tickTimeout=window.setTimeout("emitTick()", 100);
+
+}
+
+
+// begin copied from terrain2
+var pi=Math.PI;
+var useSize=512;
+var dist=useSize/2;
+var heightOffset=8;
+var heightMap=[];
+var mode="player";
+var renderer;
+var scene;
+var camera;
+var control;
+var minVal=1000;
+var maxVal=0;
+var boats=[];
+var camDist=30;
+var canvas;
+var myImage;
+var runnable=false;
+function tick(){
+  for (var b=0; b<boats.length; b++){
+    if(boats[b].loaded){
+      runnable=true;
+      var half=useSize/2;
+
+      // loop physics cycles?
+      boats[b].iRads+=boats[b].control;
+      boats[b].pitch=boats[b].iRads;
+      boats[b].x+=xRadiansScale(boats[b].iRads, boats[b].speed);
+      boats[b].z-=yRadiansScale(boats[b].iRads, boats[b].speed);
+  
+      var carY=worldAlt(boats[b].x, boats[b].z);
+  var frontX=boats[b].x+xRadiansScale(boats[b].iRads, 3);
+  var frontZ=boats[b].z-yRadiansScale(boats[b].iRads, 3);
+  var frontY=worldAlt(frontX, frontZ);
+
+  var backX=boats[b].x+xRadiansScale(boats[b].iRads-pi, 3);
+  var backZ=boats[b].z-yRadiansScale(boats[b].iRads-pi, 3);
+  var backY=worldAlt(backX, backZ);
+  var leftX=boats[b].x+xRadiansScale(boats[b].iRads+pi/2, 1.5);
+  var leftZ=boats[b].z-yRadiansScale(boats[b].iRads+pi/2, 1.5);
+  var leftY=worldAlt(leftX, leftZ);
+  var rightX=boats[b].x+xRadiansScale(boats[b].iRads-pi/2, 1.5);
+  var rightZ=boats[b].z-yRadiansScale(boats[b].iRads-pi/2, 1.5);
+  var rightY=worldAlt(rightX, rightZ);
+
+  //dbug("x:"+x+" . "+xFrac+" Z: "+z+" . "+zFrac+ " carY:"+Math.floor(carY*10)/10+" = "+Math.floor(cnw*100)/100+" "+Math.floor(cne*100)/100+" "+Math.floor(csw*100)/100+" "+Math.floor(cse*100)/100+" "+Math.floor(cSum*100)/100);
+  
+      var carSize=.5;
+      boats[b].carYaw.position.x=boats[b].x;
+      boats[b].carYaw.position.z=boats[b].z;
+      boats[b].carYaw.position.y=carY+carSize;
+      boats[b].carYaw.rotation.y=boats[b].iRads;
+      boats[b].carRoll.rotation.x=leftY/5-rightY/5;
+      boats[b].carPitch.rotation.z=frontY/8-backY/8;
+      boats[b].model.rotation.x=leftY/5-rightY/5;
+      if(mode != "server"){
+        var camVec=boats[0].iRads-pi;
+        camera.position.x = boats[0].x+xRadiansScale(camVec,camDist);
+        camera.position.y = carY+camDist/2-4;
+        camera.position.z = boats[0].z-yRadiansScale(camVec,camDist);
+        camera.lookAt(boats[0].carYaw.position);
+      }
+    }
+  }
+}
+
+
+function init(){
+  //initScene();
+}
+function initScene() {
+  console.log('initScene');
+  // create a scene, that will hold all our elements such as objects, cameras and lights.
+  scene = new THREE.Scene();
+  // create a camera, which defines where we're looking at.
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+  // create a render, sets the background color and the size
+  renderer = new THREE.WebGLRenderer();
+  renderer.setClearColor(0x000000, 1.0);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  // add light
+  var light = new THREE.DirectionalLight();
+  light.position.set(1200, 1200, 1200);
+  scene.add(light);
+  var alight = new THREE.AmbientLight( 0x808080 ); // soft white light
+  scene.add( alight );
+  // position and point the camera to the center of the scene
+  camera.position.x = 0;
+  camera.position.y = 640;
+  camera.position.z = 0;
+  camera.lookAt(scene.position);
+        camera.rotation.z=pi/2;
+
+  // add the output of the renderer to the html element
+  document.body.appendChild(renderer.domElement);
+
+  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:0, z:0, speed:1, pitch:0, iRads:0, control:-.01}));
+
+  var ctx=canvas.getContext('2d');
+  createGeometryFromMap(ctx);
+
+
+  // call the render function
+  render();
+  document.onkeydown = checkKey;
+  document.onkeyup = upKey;
+  tickTimeout=window.setTimeout("emitTick()", 100);
+
+  //window.setTimeout("window.location.reload()",60000);
+}
+function checkKey(e) {
+  //return false;
+  e.preventDefault();
+  console.log(e.keyCode);
+
+    if (e.keyCode == '38') {
+  // up arrow
+      camDist-=2;
+  //console.log(nextX+" "+nextY+" "+nextZ);
+    }
+    else if (e.keyCode == '40') {
+      camDist+=2;
+    }
+    else if (e.keyCode == '32') {
+      boats[0].speed=Math.abs(boats[0].speed-1);
+  // down arrow
+  //console.log(nextX+" "+nextY+" "+nextZ);
+    }
+    else if (e.keyCode == '37') {
+       // left arrow
+    //console.log("left "); 
+    boats[0].control=.02;
+    }
+    else if (e.keyCode == '39') {
+       // right arrow
+       //console.log("right ");
+      boats[0].control=-.02;
+    }
+
+}
+
+function upKey(e) {
+  //return false;
+  //console.log('upKey '+e.keyCode);
+  boats[0].control=0;
+} 
+
+function render() {
+  tick();
+  renderer.render(scene, camera);
+  requestAnimationFrame(render);
+}
+
 </script>
-<body>
+<body onload="init()">
 
 <% include ../partials/nav.ejs %>
 
@@ -51,6 +271,7 @@ function emitTick(){
     <% }); %>
 </ul>
 <div id="network"></div>
+<div id="debug" >DEBUG</div>
 </div>
 
 </body>

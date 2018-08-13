@@ -45,8 +45,12 @@ io.on('connection', function(socket){
     io.to(data.room).emit('subscribeClientServer', data);
   })
   socket.on('clientState', function(data) {
-    console.log("index client clientState="+data.room+" "+data.userId)
+    //console.log("index client clientState="+data.room+" "+data.userId);
     io.to(data.room).emit('clientState', data);  
+  })
+  socket.on('haveMap', function(data) {
+    console.log("index haveMap");
+    io.to(data.room).emit('haveMap', data);
   })
 
   socket.on('subscribeRoom', function(data) {
@@ -55,7 +59,7 @@ io.on('connection', function(socket){
     io.to(data.room).emit('subscribeRoom', data);  
   })
   socket.on('roomState', function(data) {
-    console.log("index room roomState="+data.room+" "+data.userId)
+    //console.log("index room roomState="+data.room)
     io.to(data.room).emit('roomState', data);  
   })
 
@@ -156,20 +160,6 @@ app
       var myUserId=result.rows[0].id;
       console.log("index client myUserId="+myUserId)
 
-/*
-      io.sockets.on('connection', function (socket) {
-        socket.on('subscribeClient', function(data) {
-          socket.join(data.room);
-          console.log("index client subscribeClient="+data.room+" "+data.userId)
-          io.to(data.room).emit('subscribeClientServer', data);
-        })
-
-        socket.on('clientState', function(data) {
-          console.log("index client clientState="+data.room+" "+data.userId)
-          io.to(data.room).emit('clientState', data);  
-        })
-      });
-*/
       res.render('pages/client', result);
       //res.send(result)
       client.release();
