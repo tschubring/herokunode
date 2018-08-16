@@ -248,7 +248,7 @@ app
       res.send("Error " + err);
     }
   })
-*/
+
   .get('/client', async (req, res) => {
     try {
       var nowMs=new Date().getTime(); 
