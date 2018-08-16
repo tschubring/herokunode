@@ -233,7 +233,11 @@ app
 
   .get('/room', async (req, res) => {
     try {
-      var myRoomId=181;
+      const text = 'SELECT * FROM test_room WHERE id = 181';
+      const values = [];
+      const client = await pool.connect();
+      const result = await client.query(text, values);
+      var myRoomId=result.rows[0].id;
       console.log("index room myRoomId="+myRoomId)
 
       res.render('pages/room', result);
@@ -244,7 +248,7 @@ app
       res.send("Error " + err);
     }
   })
-
+*/
   .get('/client', async (req, res) => {
     try {
       var nowMs=new Date().getTime(); 
