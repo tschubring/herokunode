@@ -230,14 +230,10 @@ app
       res.send("Error " + err);
     }
   })
-/*
+
   .get('/room', async (req, res) => {
     try {
-      const text = 'INSERT INTO test_room(name) VALUES($1) RETURNING *';
-      const values = ['brianc'+rnd(1000)];
-      const client = await pool.connect();
-      const result = await client.query(text, values);
-      var myRoomId=result.rows[0].id;
+      var myRoomId=181;
       console.log("index room myRoomId="+myRoomId)
 
       res.render('pages/room', result);
@@ -248,7 +244,7 @@ app
       res.send("Error " + err);
     }
   })
-*/
+
   .get('/client', async (req, res) => {
     try {
       var nowMs=new Date().getTime(); 
