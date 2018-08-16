@@ -8,73 +8,128 @@
     <script src="libs/OBJLoader.js"></script>
     <script src="libs/display.js"></script>
 <script>
-  var srch=window.location.search.replace("?", "");
-  var sets=srch.split("&");
-  var myRoomId=-1;
-  var myUserId=<%= rows[0].id %>;
-  var socket = io.connect();
-  for (var s=0; s<sets.length; s++){
-    var parts=sets[s].split("=");
-    if(parts[0]=="roomId"){myRoomId=parts[1];}
-  }
-  console.log('client.ejs myRoomId='+myRoomId);
-  if(myRoomId != -1){
-    socket.emit("subscribeClient", { room: "room_"+myRoomId, userId: myUserId});
+//var srch=window.location.search.replace("?", "");
+//var sets=srch.split("&");
+  //for (var s=0; s<sets.length; s++){
+    //var parts=sets[s].split("=");
+    //if(parts[0]=="roomId"){myRoomId=parts[1];}
+  //}
+var myRoomId=181;
+var myUserId=<%= rows[0].id %>;
+var socket = io.connect();
+var myImage;
+  
+console.log('client.ejs myRoomId='+myRoomId);
 
-  socket.on('roomState', function(data) {
-    if(runnable){
-    //console.log("client.ejs roomState");
+socket.emit("subscribeClient", { roomId: myRoomId, userId: myUserId, clientMs:new Date().getTime()});
+
+socket.on('clientState', function(data) {
+  if(runnable){
+    var nowMs=new Date().getTime();
+    //console.log("client.ejs clientState");
     //console.log(data);
     var userIds=[];
     for (var b=0; b<boats.length; b++){
       userIds.push(boats[b].userId);
+    }    
+    var user=data;
+    if(userIds.indexOf(user.userId)==-1){
+      console.log("client.ejs roomState create "+boats.length+" "+runnable);
+      user.num=boats.length;
+      user.updated=nowMs;
+      boats.push(newBoat(user));
     }
-    
-    for(var u=0; u<data.users.length; u++){
-      var user=data.users[u];
-      if(userIds.indexOf(user.userId)==-1){
-        console.log("client.ejs roomState create "+boats.length+" "+runnable);
-        user.num=boats.length;
-        boats.push(newBoat(user));
+    else{
+      if(user.userId != myUserId){
+        var ord=userIds.indexOf(user.userId);
+        //dbug(ord);
+        if(boats[ord].loaded){
+          
+          boats[ord].updated=nowMs;
+          boats[ord].iRads=user.iRads;
+          boats[ord].control=user.control;
+          boats[ord].pitch=user.pitch;
+          boats[ord].speed=user.speed;
+          boats[ord].x=user.x;
+          boats[ord].z=user.z;
+          boats[ord].missileX=user.missileX;
+          boats[ord].missileY=user.missileY;
+          boats[ord].missileZ=user.missileZ;
+          boats[ord].missileSpeed=user.missileSpeed;
+          boats[ord].missileFired=user.missileFired;
+          boats[ord].detonation=user.detonation;
+        }
       }
-      else{
-        if(user.userId != myUserId){
-          var ord=userIds.indexOf(user.userId);
-          //dbug(ord);
-          if(boats[ord].loaded){
-            boats[ord].iRads=user.iRads;
-            boats[ord].control=user.control;
-            boats[ord].pitch=user.pitch;
-            boats[ord].speed=user.speed;
-            boats[ord].x=user.x;
-            boats[ord].z=user.z;
+    }
+  }
+});
+
+
+/*
+socket.on('roomState', function(data) {
+  if(runnable){
+      //console.log("client.ejs roomState");
+      //console.log(data);
+      var userIds=[];
+      for (var b=0; b<boats.length; b++){
+        userIds.push(boats[b].userId);
+      }    
+      for(var u=0; u<data.users.length; u++){
+        var user=data.users[u];
+        if(userIds.indexOf(user.userId)==-1){
+          console.log("client.ejs roomState create "+boats.length+" "+runnable);
+          user.num=boats.length;
+          boats.push(newBoat(user));
+        }
+        else{
+          if(user.userId != myUserId){
+            var ord=userIds.indexOf(user.userId);
+            //dbug(ord);
+            if(boats[ord].loaded){
+              boats[ord].iRads=user.iRads;
+              boats[ord].control=user.control;
+              boats[ord].pitch=user.pitch;
+              boats[ord].speed=user.speed;
+              boats[ord].x=user.x;
+              boats[ord].z=user.z;
+            }
           }
         }
       }
     }
-    }
-  });
-  socket.on('haveMap', function(data) {
+});
+*/
+  
+  socket.on('haveSeeds', function(data) {
     if(mapReceived==false){
-      console.log("client.ejs haveMap");
+      console.log("client.ejs haveSeeds "+data.seeds);
+      mySeeds=JSON.parse(data.seeds);
       mapReceived=true;
-      var mapData=data.map;
-      saveMap=mapData;
+
       canvas = document.createElement('canvas');
       canvas.width = useSize;
       canvas.height = useSize;
+      var ctx = canvas.getContext('2d');
+      console.log(mySeeds);
+      islandFromSeeds(ctx,useSize, mySeeds);
+
+      var pixel = canvas.toDataURL();
+      console.log(typeof pixel);
       myImage = new Image();
-      document.body.appendChild(myImage);
+      document.getElementById('hideMe').appendChild(myImage);
+      //createGeometryFromMap(ctx);
       myImage.onload=function(){
         console.log('myImage onload');
         var ctx = canvas.getContext('2d');
         ctx.drawImage(myImage, 0, 0);
         initScene();
       }
-      myImage.src = mapData;
+      myImage.src = pixel;
+
     }
   });
-}
+
+var mySeeds=[.5,.5,.5,.5,.5,.5,.5,.5,.5,.5,.5,.5];
 var saveMap="";
 var mapReceived=false;
 var sendTime=0;
@@ -83,7 +138,7 @@ function emitTick(){
   window.clearTimeout(tickTimeout);
   //console.log('emitTick()');
   var dataObj={
-    room: "room_"+myRoomId,
+    roomId:+myRoomId,
     userId:myUserId,
     control:boats[0].control,
     iRads:boats[0].iRads,
@@ -92,7 +147,14 @@ function emitTick(){
     pitch:boats[0].pitch,
     speed:boats[0].speed,
     x:boats[0].x,
-    z:boats[0].z
+    z:boats[0].z,
+    missileX:boats[0].missileX,
+    missileY:boats[0].missileY,
+    missileZ:boats[0].missileZ,
+    missileSpeed:boats[0].missileSpeed,
+    missileIrads:boats[0].missileIrads,
+    missileFired:boats[0].missileFired,
+    detonation:boats[0].detonation
   }  
   //console.log(dataObj);
   socket.emit("clientState", dataObj);  
@@ -105,7 +167,7 @@ function emitTick(){
 var pi=Math.PI;
 var useSize=512;
 var dist=useSize/2;
-var heightOffset=8;
+var heightOffset=12;
 var heightMap=[];
 var mode="player";
 var renderer;
@@ -120,6 +182,25 @@ var canvas;
 var myImage;
 var runnable=false;
 function tick(){
+  var nowMs=new Date().getTime();
+  boats[0].updated=nowMs;
+  //dbug('tick');
+  var culls=[];
+  for (var b=0; b<boats.length; b++){
+    if(boats[b].loaded){
+      var deltaMs=nowMs-boats[b].updated;
+      //dbuga(deltaMs);
+      if(deltaMs>10000){
+        culls.unshift(b);
+      }
+    }
+  }
+  for (var c=0; c<culls.length; c++){
+    var gone=boats.splice(culls[c],1)[0];
+    scene.remove(gone.carYaw);
+    scene.remove(gone.missileModel);
+  }
+  // once to calc, 
   for (var b=0; b<boats.length; b++){
     if(boats[b].loaded){
       runnable=true;
@@ -127,50 +208,127 @@ function tick(){
 
       // loop physics cycles?
       boats[b].iRads+=boats[b].control;
-      boats[b].pitch=boats[b].iRads;
+      if(boats[b].spinout>0){
+        boats[b].spinout-=.01;
+        boats[b].pitch+=.5;
+      }
+      else{
+        boats[b].pitch=boats[b].iRads;
+      }
       boats[b].x+=xRadiansScale(boats[b].iRads, boats[b].speed);
       boats[b].z-=yRadiansScale(boats[b].iRads, boats[b].speed);
-  
-      var carY=worldAlt(boats[b].x, boats[b].z);
-  var frontX=boats[b].x+xRadiansScale(boats[b].iRads, 3);
-  var frontZ=boats[b].z-yRadiansScale(boats[b].iRads, 3);
-  var frontY=worldAlt(frontX, frontZ);
+      boats[b].y=worldAlt(boats[b].x, boats[b].z);
 
-  var backX=boats[b].x+xRadiansScale(boats[b].iRads-pi, 3);
-  var backZ=boats[b].z-yRadiansScale(boats[b].iRads-pi, 3);
-  var backY=worldAlt(backX, backZ);
-  var leftX=boats[b].x+xRadiansScale(boats[b].iRads+pi/2, 1.5);
-  var leftZ=boats[b].z-yRadiansScale(boats[b].iRads+pi/2, 1.5);
-  var leftY=worldAlt(leftX, leftZ);
-  var rightX=boats[b].x+xRadiansScale(boats[b].iRads-pi/2, 1.5);
-  var rightZ=boats[b].z-yRadiansScale(boats[b].iRads-pi/2, 1.5);
-  var rightY=worldAlt(rightX, rightZ);
 
-  //dbug("x:"+x+" . "+xFrac+" Z: "+z+" . "+zFrac+ " carY:"+Math.floor(carY*10)/10+" = "+Math.floor(cnw*100)/100+" "+Math.floor(cne*100)/100+" "+Math.floor(csw*100)/100+" "+Math.floor(cse*100)/100+" "+Math.floor(cSum*100)/100);
-  
-      var carSize=.5;
-      boats[b].carYaw.position.x=boats[b].x;
-      boats[b].carYaw.position.z=boats[b].z;
-      boats[b].carYaw.position.y=carY+carSize;
-      boats[b].carYaw.rotation.y=boats[b].iRads;
-      boats[b].carRoll.rotation.x=leftY/5-rightY/5;
-      boats[b].carPitch.rotation.z=frontY/8-backY/8;
-      boats[b].model.rotation.x=leftY/5-rightY/5;
-      if(mode != "server"){
-        var camVec=boats[0].iRads-pi;
-        camera.position.x = boats[0].x+xRadiansScale(camVec,camDist);
-        camera.position.y = carY+camDist/2-4;
-        camera.position.z = boats[0].z-yRadiansScale(camVec,camDist);
-        camera.lookAt(boats[0].carYaw.position);
+      boats[b].frontX=boats[b].x+xRadiansScale(boats[b].pitch, 3);
+      boats[b].frontZ=boats[b].z-yRadiansScale(boats[b].pitch, 3);
+      boats[b].frontY=worldAlt(boats[b].frontX, boats[b].frontZ);
+
+      boats[b].backX=boats[b].x+xRadiansScale(boats[b].pitch-pi, 3);
+      boats[b].backZ=boats[b].z-yRadiansScale(boats[b].pitch-pi, 3);
+      boats[b].backY=worldAlt(boats[b].backX, boats[b].backZ);
+      boats[b].leftX=boats[b].x+xRadiansScale(boats[b].pitch+pi/2, 1.5);
+      boats[b].leftZ=boats[b].z-yRadiansScale(boats[b].pitch+pi/2, 1.5);
+      boats[b].leftY=worldAlt(boats[b].leftX, boats[b].leftZ);
+      boats[b].rightX=boats[b].x+xRadiansScale(boats[b].pitch-pi/2, 1.5);
+      boats[b].rightZ=boats[b].z-yRadiansScale(boats[b].pitch-pi/2, 1.5);
+      boats[b].rightY=worldAlt(boats[b].rightX, boats[b].rightZ);
+      if(boats[b].missileFired==false){
+        boats[b].missileX=boats[b].frontX;
+        boats[b].missileZ=boats[b].frontZ;
+        boats[b].missileY=boats[b].frontY+1;    
+        boats[b].missileIrads=boats[b].pitch;    
+        boats[b].missileSpeed=2;    
+      }
+      else{// missile is fired
+        if(boats[b].detonation>0){//detonating
+          boats[b].detonation-=.02;
+          if(boats[b].detonation<=0){// completed detonation, reset
+            boats[b].missileFired=false;
+            boats[b].detonation=0;
+            boats[b].missileX=boats[b].frontX;
+            boats[b].missileZ=boats[b].frontZ;
+            boats[b].missileY=boats[b].frontY+1;    
+            boats[b].missileIrads=boats[b].pitch;
+            boats[b].missileModel.scale.set(.5,.5,.5);
+            boats[b].missileModel.material.opacity=1;
+
+          }
+          else{//display detonating
+            var s=1+6*(.5+(1-boats[b].detonation));
+            var o=(boats[b].detonation);
+            boats[b].missileModel.scale.set(s,s,s);
+            boats[b].missileModel.material.opacity=o;
+          } 
+        }
+        else{// fire and hit test
+          var triggered=false;
+          if(boats[b].missileX<(0-useSize/2)){triggered=true;}
+          if(boats[b].missileZ<(0-useSize/2)){triggered=true;}
+          if(boats[b].missileX>(useSize/2)){triggered=true;}
+          if(boats[b].missileZ>(useSize/2)){triggered=true;}
+
+          for (var t=0; t<boats.length; t++){
+            if(t !=b){
+              var dx=boats[t].x-boats[b].missileX;
+              var dz=boats[t].z-boats[b].missileZ;
+              var dist=Math.sqrt(dx*dx+dz*dz);
+              if(dist<10){
+                var rads=xyxyToRads(boats[b].missileX,boats[b].missileZ,boats[t].x,boats[t].z);
+                boats[t].speed=1;
+                boats[t].spinout=1;
+                boats[t].iRads=rads;
+                triggered=true;
+              }
+            }
+          }
+
+          if(triggered){
+            boats[b].detonation=1
+          }
+          else{//carry on.
+            boats[b].missileX+=xRadiansScale(boats[b].missileIrads, boats[b].missileSpeed);
+            boats[b].missileZ-=yRadiansScale(boats[b].missileIrads, boats[b].missileSpeed);
+            boats[b].missileY=worldAlt(boats[b].missileX, boats[b].missileZ)+1;
+            boats[b].missileModel.scale.set(1,1,1);
+            boats[b].missileModel.material.opacity=1;
+          }
+        }
       }
     }
   }
+
+  for (var b=0; b<boats.length; b++){
+    if(boats[b].loaded){
+      var carSize=.5;
+      boats[b].missileModel.position.x=boats[b].missileX;
+      boats[b].missileModel.position.y=boats[b].missileY;
+      boats[b].missileModel.position.z=boats[b].missileZ;
+      boats[b].carYaw.position.x=boats[b].x;
+      boats[b].carYaw.position.y=boats[b].y+carSize;
+      boats[b].carYaw.position.z=boats[b].z;
+      boats[b].carYaw.rotation.y=boats[b].pitch;
+      boats[b].carRoll.rotation.x=boats[b].leftY/5-boats[b].rightY/5;
+      boats[b].carPitch.rotation.z=boats[b].frontY/8-boats[b].backY/8;
+      boats[b].model.rotation.x=boats[b].leftY/5-boats[b].rightY/5;
+    }
+  }
+  if(mode != "server"){
+    var camVec=boats[0].iRads-pi;
+    camera.position.x = boats[0].x+xRadiansScale(camVec,camDist);
+    camera.position.y = boats[0].y+camDist/2-4;
+    camera.position.z = boats[0].z-yRadiansScale(camVec,camDist);
+    camera.lookAt(boats[0].carYaw.position);
+  }
+  dbug(boats[0].missileFired+" "+boats[0].detonation);
+
 }
 
 
 function init(){
   //initScene();
 }
+var controls;
 function initScene() {
   console.log('initScene');
   // create a scene, that will hold all our elements such as objects, cameras and lights.
@@ -185,7 +343,7 @@ function initScene() {
   var light = new THREE.DirectionalLight();
   light.position.set(1200, 1200, 1200);
   scene.add(light);
-  var alight = new THREE.AmbientLight( 0x808080 ); // soft white light
+  var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
   scene.add( alight );
   // position and point the camera to the center of the scene
   camera.position.x = 0;
@@ -196,22 +354,43 @@ function initScene() {
 
   // add the output of the renderer to the html element
   document.body.appendChild(renderer.domElement);
-
-  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:0, z:0, speed:1, pitch:0, iRads:0, control:-.01}));
+  renderer.domElement.style.position="absolute";
+  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:0, z:0, speed:1, pitch:0, iRads:0, control:-.01, missileX:0,missileY:0,missileZ:0,missileSpeed:1,missileIrads:0, missileFired:false, detonation:0}));
 
   var ctx=canvas.getContext('2d');
   createGeometryFromMap(ctx);
 
-
+  controls = document.createElement('canvas');
+  document.body.appendChild(controls); // adds the canvas to the body element
+  controls.width=window.innerWidth;
+  controls.height=window.innerHeight;
+  controls.style.backgroundColor="rgba(255,0,0,.5)";
+  controls.style.margin=0;
+  controls.style.position="absolute";
   // call the render function
   render();
-  document.onkeydown = checkKey;
+        document.getElementById('hideMe').style.display="none";
+
+  document.onkeydown = downKey;
   document.onkeyup = upKey;
   tickTimeout=window.setTimeout("emitTick()", 100);
 
   //window.setTimeout("window.location.reload()",60000);
 }
-function checkKey(e) {
+function touchStart(e){
+  e.preventDefault ();
+  console.log(e.touches);
+}
+function touchMove(e){
+  e.preventDefault ();
+  console.log(e.touches);
+}
+function touchEnd(e){
+  e.preventDefault ();
+  console.log(e.touches);
+}
+
+function downKey(e) {
   //return false;
   e.preventDefault();
   console.log(e.keyCode);
@@ -222,12 +401,19 @@ function checkKey(e) {
   //console.log(nextX+" "+nextY+" "+nextZ);
     }
     else if (e.keyCode == '40') {
-      camDist+=2;
+       // down arrow
+       camDist+=2;
     }
     else if (e.keyCode == '32') {
+      // space
+      if(boats[0].missileFired==false){
+        boats[0].missileFired=true;
+      }
+    }
+    else if (e.keyCode == '191') {
+      // slash
       boats[0].speed=Math.abs(boats[0].speed-1);
-  // down arrow
-  //console.log(nextX+" "+nextY+" "+nextZ);
+      // space
     }
     else if (e.keyCode == '37') {
        // left arrow
@@ -239,12 +425,12 @@ function checkKey(e) {
        //console.log("right ");
       boats[0].control=-.02;
     }
-
+  
 }
 
 function upKey(e) {
   //return false;
-  //console.log('upKey '+e.keyCode);
+  console.log('upKey '+e.keyCode);
   boats[0].control=0;
 } 
 
@@ -257,21 +443,22 @@ function render() {
 </script>
 <body onload="init()">
 
-<% include ../partials/nav.ejs %>
+<!--<% include ../partials/nav.ejs %>-->
 
 <div class="container">
-<script>
-
-</script>
-<h2>User <%= rows[0].name %> Created</h2>
-<button onclick="emitTick()">emitTick</button>
-<ul>
-    <% rows.forEach(function(r) { %>
+  <div id="hideMe">
+    <h2>User <%= rows[0].name %> Created</h2>
+<!--
+    <button onclick="emitTick()">emitTick</button>
+ -->
+    <ul>
+      <% rows.forEach(function(r) { %>
         <li><%= r.id %> - <%= JSON.stringify(r) %></li>
-    <% }); %>
-</ul>
-<div id="network"></div>
-<div id="debug" >DEBUG</div>
+      <% }); %>
+    </ul>
+    <div id="network"></div>
+    <div id="debug" >DEBUG</div>
+  </div>
 </div>
 
 </body>

@@ -11,6 +11,16 @@ function newBoat(conf){
   var carYaw = new THREE.Object3D();
   carYaw.add(carPitch);
   scene.add(carYaw);
+
+  var geometry = new THREE.SphereGeometry( .5, 8, 8 );
+  //var material = new THREE.MeshBasicMaterial( {color: 0xffffff} );
+  var material = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.5});
+  var temp  = new THREE.Mesh( geometry, material );
+  var light = new THREE.PointLight( 0xff0000, 7, 10 );
+  temp.add( light );
+  scene.add( temp );
+  conf.missileModel=temp;
+
   conf.carRoll=carRoll;
   conf.carRoll=carRoll;
   conf.carPitch=carPitch;
@@ -48,41 +58,50 @@ function dbug(str){
   document.getElementById('debug').style.display="block";
   document.getElementById('debug').innerHTML=str;
 }
+function dbuga(str){
+  document.getElementById('debug').innerHTML+='<br />'+str;
+}
 function rnd(range){
   return Math.floor(Math.random()*range);
-}  
+}
 
-function generateIsland(ctx, across){
-  var r0=rnd(1000)/1000;
-  var r1=rnd(1000)/1000;
-  var r2=rnd(1000)/1000;
-  var r3=rnd(1000)/1000;
-  var r4=rnd(1000)/1000;
-  var r5=rnd(1000)/1000;
-  var r6=rnd(1000)/1000;
-  var r7=rnd(1000)/1000;
-  var xSkew=rnd(1000)/1000-.5;
-  var ySkew=rnd(1000)/1000-.5;
+function islandFromSeeds(ctx, across, seeds){
+  var r0=seeds[0];
+  var r1=seeds[1];
+  var r2=seeds[2];
+  var r3=seeds[3];
+  var r4=seeds[4];
+  var r5=seeds[5];
+  var r6=seeds[6];
+  var r7=seeds[7];
+
+  var xSkew=seeds[8]-.5;
+  var ySkew=seeds[9]-.5;
 
   var px=1;
   var round=1;//Math.floor(across/64);
   var cells=across;
   var pi=Math.PI;
-  var scaleAll=1;
-  var scale0=scaleAll*(across/16+rnd(across/16));
-  var scale1=scaleAll*(across/32+rnd(across/32));
-  var scale2=scaleAll*(across/37+rnd(across/37));
-  var scale3=scaleAll*(across/60+rnd(across/60));
+  var scaleAll=.5;
+  var scale0=scaleAll*(across/16+16*r3);
+  var scale1=scaleAll*(across/32+32*r6);
+  var scale2=scaleAll*(across/40+37*r7);
+  var scale3=scaleAll*(across/54+60*r5);
   //document.getElementById('debugDiv').innerHTML="scale0:"+scale0+" "+scale1;
   for(var x=0; x<cells*px; x+=px){
     for(var y=0; y<cells*px; y+=px){
       var xFrac=.5-Math.cos(2*pi*x/across)/2;
       var yFrac=.5-Math.cos(2*pi*y/across)/2;
-      var shapeFrac=Math.sin((y*xSkew+x+across/2)/(scale0+scale0*r1))/3+Math.cos((x*ySkew+y+across/2)/(scale0+scale0*r0))/3+.66;
-
-      var terrainFrac=Math.sin((y*ySkew+x+across/2)/(scale1+scale1*r3))/3+Math.cos((x*xSkew+y+across/2)/(scale1+scale1*r2))/3+1;
-      var noiseFrac=Math.sin((x+across/2)/(scale2+scale2*r5))/3+Math.cos((y+across/2)/(scale2+scale2*r4))/3+.5;
-      var smallFrac=Math.sin((x+across/2)/(scale3+scale3*r7))/3+Math.cos((y+across/2)/(scale3+scale3*r6))/3+.75;
+      var shapeFrac=Math.sin((y*xSkew+x+across/2)/(scale0+scale0*r1))/3+Math.cos((x*ySkew+y+across/2)/(scale0+scale0*r0))/3+.5+r2/2;
+      var terrainFrac=Math.sin((y*ySkew+x+across/2)/(scale1+scale1*r3))/3+Math.cos((x*xSkew+y+across/2)/(scale1+scale1*r2))/3+.66;
+      var noiseFrac=Math.sin((x+across/2)/(scale2+scale2*r5))/3+Math.cos((y+across/2)/(scale2+scale2*r4))/3+.75;
+      var smallFrac=Math.sin((x+across/2)/(scale3+scale3*r7))/3+Math.cos((y+across/2)/(scale3+scale3*r6))/3+1;
+      //shapeFrac=1;
+      //smallFrac=1;
+      //noiseFrac=1;
+      //terrainFrac=1;
+      //xFrac=1;
+      //yFrac=1;
 
 
       var val=Math.floor(256*yFrac*xFrac*shapeFrac*terrainFrac*noiseFrac*smallFrac/round)*round;
@@ -103,9 +122,10 @@ function generateIsland(ctx, across){
       }
   }
 }
+
 function xyxyToRads(x1,y1,x2,y2){
   var deltaX = x2 - x1;
-  var deltaY = y2 - y1;
+  var deltaY = y1 - y2;
   var rads = Math.atan2(deltaY, deltaX); // In radians
   return (rads+2*pi)%(2*pi);
 }
@@ -132,13 +152,13 @@ function createGeometryFromMap(ctx) {
                     // since we're grayscale, we only need one element
                     var yValue = pixel.data[(width-z) * 4 + (depth * x * 4)] / heightOffset;
 
-                    if((yValue >15)&&(yValue<16.5)&&((x/2)%roadWidth>roadThresh)&&((z/2)%roadWidth>roadThresh)){yValue+=heightOffset/3;}
+                    //if((yValue >15)&&(yValue<16.5)&&((x/2)%roadWidth>roadThresh)&&((z/2)%roadWidth>roadThresh)){yValue=18;}
                     if(((x/2)%roadWidth<=roadThresh)||((z/2)%roadWidth<=roadThresh)){
                       if(yValue>15){
-                        yValue=Math.floor(yValue/2)*2;
+                        //yValue=Math.floor(yValue/2)*2;
                       }
                       else{
-                        yValue*=.97;
+                        //yValue*=.97;
                       }
                     }
 

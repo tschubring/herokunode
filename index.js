@@ -12,6 +12,16 @@ const PORT = process.env.PORT || 5000
 var server = app.listen(PORT, function () {
   console.log('index - server listening on port ' + PORT);
 });
+const aglob="globular";
+const { Pool } = require('pg')
+const envUrl=process.env.DATABASE_URL
+const dbUrl ='postgres://fdhnjjxenmrtbl:66eb82d538a2f1f0e623657c571b7a6a7a175a234065a4a3fa94e26eb58e96c6@ec2-54-227-241-179.compute-1.amazonaws.com:5432/dfv16qht4jj8kv'
+const pool = new Pool({
+  connectionString: dbUrl,
+  ssl: true
+})
+
+
 var io = require('socket.io')(server);
 
 /*
@@ -31,7 +41,7 @@ var allClients = [];
 
 io.on('connection', function(socket){
   allClients.push(socket);
-  console.log('index a user connected');
+  console.log('index a user connected '+aglob);
   socket.on('disconnect', function() {
     console.log('Got disconnect!');
     var i = allClients.indexOf(socket);
@@ -39,40 +49,127 @@ io.on('connection', function(socket){
     console.log('Got disconnect! ' +allClients.length);
   });
 
-  socket.on('subscribeClient', function(data) {
-    socket.join(data.room);
-    console.log("index client subscribeClient="+data.room+" "+data.userId)
-    io.to(data.room).emit('subscribeClientServer', data);
-  })
-  socket.on('clientState', function(data) {
-    //console.log("index client clientState="+data.room+" "+data.userId);
-    io.to(data.room).emit('clientState', data);  
-  })
+  socket.on('subscribeClient', async (data) => {
+    socket.join(data.roomId);
+    console.log("index client subscribeClient "+data.userId+" "+data.roomId);
+
+
+
+
+    var nowMs=new Date().getTime(); 
+    var text  = "DELETE FROM test_users WHERE updated < $1";
+    var values = [nowMs-5000];
+    try {
+      const client = await pool.connect();
+      const result = await client.query(text, values);
+      console.log('DELETED '+result.rowCount);
+      client.release();
+    } catch (err) {
+      console.error(err);
+      res.send("Error " + err);
+    }
+
+
+
+
+
+
+
+
+
+    text  = "SELECT COUNT (*) FROM test_users WHERE roomId = $1";
+    values = [data.roomId];
+
+    try {
+      const client = await pool.connect();
+      const result = await client.query(text, values);
+      client.release();
+
+
+      var roomSeeds=JSON.stringify(generateSeeds(12));
+      if(result.rowCount>0){// for safety only
+        console.log('subscribed count '+result.rows[0]['count']);
+
+        if(result.rows[0]['count']==1){
+          const text  = "UPDATE test_room SET seeds = $1";
+          const values = [roomSeeds];
+          try {
+            const client = await pool.connect();
+            const result = await client.query(text, values);
+            //console.log(result);
+            client.release();   
+          } catch (err) {
+            console.error(err);
+            res.send("Error " + err);
+          }  
+        }
+        else{
+          const text  = "SELECT seeds FROM test_room WHERE id = $1";
+          const values = [data.roomId];
+          try {
+            const client = await pool.connect();
+            const result = await client.query(text, values);
+            console.log("select seeds "+result.rows[0].seeds);
+            roomSeeds=result.rows[0].seeds;
+            
+            client.release();   
+          } catch (err) {
+            console.error(err);
+            res.send("Error " + err);
+          }  
+        }
+      }
+      io.to(data.roomId).emit('haveSeeds', {seeds:roomSeeds});
+
+    } catch (err) {
+      console.error(err);
+      res.send("Error " + err);
+    }
+  });
+
+  socket.on('clientState', async (data) => {
+    //console.log(data);
+    const text  = "UPDATE test_users SET updated = $1 WHERE id = $2  RETURNING *";
+    const values = [new Date().getTime(), data.userId];
+    io.to(data.roomId).emit('clientState', data);
+
+    try {
+
+      //console.log('update test_users '+data.userId);
+      const client = await pool.connect();
+      const result = await client.query(text, values);
+      //res.render('pages/db', result);
+      //res.send(result)
+      client.release();
+      //console.log(result.rowCount);
+
+    } catch (err) {
+      console.error(err);
+      res.send("Error " + err);
+    }
+    ////io.to(data.room).emit('clientState', data);
+  });
+/*
   socket.on('haveMap', function(data) {
     console.log("index haveMap");
-    io.to(data.room).emit('haveMap', data);
+    io.to(data.roomId).emit('haveMap', data);
   })
-
+*/
+/*room is not working anymore. Just a lookyloo
   socket.on('subscribeRoom', function(data) {
-    console.log("index room subscribeRoom="+data.room+" userId "+data.userId)
-    socket.join(data.room);
-    io.to(data.room).emit('subscribeRoom', data);  
-  })
-  socket.on('roomState', function(data) {
-    //console.log("index room roomState="+data.room)
-    io.to(data.room).emit('roomState', data);  
-  })
+    console.log("index room subscribeRoom="+data.roomId+" userId "+data.userId)
+    socket.join(data.roomId);
+    io.to(data.roomId).emit('subscribeRoom', data);  
+    })
+    socket.on('roomState', function(data) {
+      //console.log("index room roomState="+data.roomId)
+      io.to(data.roomId).emit('roomState', data);  
+    })
+*/
 
-});
+});// end of io.on
 
 
-const { Pool } = require('pg')
-const envUrl=process.env.DATABASE_URL
-const dbUrl ='postgres://fdhnjjxenmrtbl:66eb82d538a2f1f0e623657c571b7a6a7a175a234065a4a3fa94e26eb58e96c6@ec2-54-227-241-179.compute-1.amazonaws.com:5432/dfv16qht4jj8kv'
-const pool = new Pool({
-  connectionString: dbUrl,
-  ssl: true
-})
       //console.log("dbUrl "+ dbUrl);
       //console.log("envUrl "+ envUrl);
 
@@ -133,6 +230,7 @@ app
       res.send("Error " + err);
     }
   })
+/*
   .get('/room', async (req, res) => {
     try {
       const text = 'INSERT INTO test_room(name) VALUES($1) RETURNING *';
@@ -150,11 +248,14 @@ app
       res.send("Error " + err);
     }
   })
+*/
   .get('/client', async (req, res) => {
     try {
+      var nowMs=new Date().getTime(); 
+
       const username=cool();
-      const text = 'INSERT INTO test_users(name, playlist) VALUES($1, $2) RETURNING *';
-      const values = [username, '[]'];
+      const text = 'INSERT INTO test_users(name,updated, roomId) VALUES($1, $2, $3) RETURNING *';
+      const values = [username, nowMs, 181];
       const client = await pool.connect();
       const result = await client.query(text, values);
       var myUserId=result.rows[0].id;
@@ -169,5 +270,12 @@ app
     }
   })
 
+function generateSeeds(count){
+  var seeds=[];
+  for (var s=0; s<count; s++){
+    seeds.push(rnd(1000)/1000);
+  }
+  return seeds;
+}
 
 
