@@ -358,7 +358,7 @@ function initScene() {
   // add the output of the renderer to the html element
   document.body.appendChild(renderer.domElement);
   renderer.domElement.style.position="absolute";
-  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:0, z:0, speed:maxSpeed, pitch:0, iRads:0, control:-.01, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*3,missileIrads:0, missileFired:false, detonation:0}));
+  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:0, z:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*3,missileIrads:0, missileFired:false, detonation:0}));
 
   var ctx=canvas.getContext('2d');
   createGeometryFromMap(ctx);
