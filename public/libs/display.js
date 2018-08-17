@@ -42,7 +42,7 @@ function newBoat(conf){
           boat.scale.x=carSize;
           boat.scale.y=carSize;
           boat.scale.z=carSize;
-          boat.position.y=carSize*4;
+          boat.position.y=carSize*2.5;
           //piece.rotation.y=0;
           for(var bc=0; bc<boat.children.length; bc++){
             boat.children[bc].material.color.r=.75;
@@ -100,7 +100,7 @@ function islandFromSeeds(ctx, across, seeds){
       var shapeFrac=Math.sin((y*xSkew+x+across/2)/(scale0+scale0*r1))/3+Math.cos((x*ySkew+y+across/2)/(scale0+scale0*r0))/3+.5+r2/2;
       var terrainFrac=Math.sin((y*ySkew+x+across/2)/(scale1+scale1*r3))/3+Math.cos((x*xSkew+y+across/2)/(scale1+scale1*r2))/3+.66;
       var noiseFrac=Math.sin((x+across/2)/(scale2+scale2*r5))/3+Math.cos((y+across/2)/(scale2+scale2*r4))/3+.75;
-      var smallFrac=Math.sin((x+across/2)/(scale3+scale3*r7))/3+Math.cos((y+across/2)/(scale3+scale3*r6))/3+1;
+      var smallFrac=Math.sin((x+across/2)/(scale3+scale3*r7))/3+Math.cos((y+across/2)/(scale3+scale3*r6))/3+.5;
       //shapeFrac=1;
       //smallFrac=1;
       //noiseFrac=1;
