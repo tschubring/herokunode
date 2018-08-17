@@ -1,4 +1,7 @@
 //boats.push(newBoat({num:0, loaded:false, local:true, x:0, y:0, speed:0, pitch:0, iRads:0}));
+var carSize=.2;
+var maxSpeed=.3;
+
 function newBoat(conf){
   console.log(conf);
   var trans=new THREE.MeshPhongMaterial({"emissive":new THREE.Color("rgb(32,32,32)"), "color":new THREE.Color("rgb(255,255,0)"), "opacity":.5,   "transparent":true});
@@ -14,11 +17,13 @@ function newBoat(conf){
 
   var geometry = new THREE.SphereGeometry( .5, 8, 8 );
   //var material = new THREE.MeshBasicMaterial( {color: 0xffffff} );
-  var material = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.5});
+  var material = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 1});
   var temp  = new THREE.Mesh( geometry, material );
   var light = new THREE.PointLight( 0xff0000, 7, 10 );
   temp.add( light );
   scene.add( temp );
+  temp.scale.set(carSize*2,carSize*2,carSize*2);
+
   conf.missileModel=temp;
 
   conf.carRoll=carRoll;
@@ -34,10 +39,10 @@ function newBoat(conf){
           boat=object;
           //console.log(piece);
         
-          boat.scale.x=.4;
-          boat.scale.y=.4;
-          boat.scale.z=.4;
-          boat.position.y=.7;
+          boat.scale.x=carSize;
+          boat.scale.y=carSize;
+          boat.scale.z=carSize;
+          boat.position.y=carSize*4;
           //piece.rotation.y=0;
           for(var bc=0; bc<boat.children.length; bc++){
             boat.children[bc].material.color.r=.75;
