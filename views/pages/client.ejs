@@ -2,7 +2,7 @@
 <html>
 <head>
   <% include ../partials/header.ejs %>
-</head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"></head>
 <script src="/socket.io/socket.io.js"></script>
     <script src="libs/three.min.js"></script>
     <script src="libs/OBJLoader.js"></script>
@@ -414,8 +414,8 @@ function processTouches(touches){
     for (var k=0; k<keys.length; k++){
       var key=keys[k];
       var control=controlsObj[key];
-      if((touches[t].pageX>control.l)&&(touches[t].pageX<control.r)&&(touches[t].pageY>control.t)&&(touches[t].pageY<control.b)){
-        controlsObjj[key].down=true;
+      if((touches[t].screenX>control.l)&&(touches[t].screenX<control.r)&&(touches[t].screenY>control.t)&&(touches[t].screenY<control.b)){
+        controlsObj[key].down=true;
       }
     }
   }
