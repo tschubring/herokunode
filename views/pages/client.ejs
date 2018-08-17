@@ -421,8 +421,8 @@ function processTouches(touches){
   }
   for (var k=0; k<keys.length; k++){
     var key=keys[k];
-    if((prevObj[key].down==true)&&(controlsObj[key].down=false)){setControl(key, false);}
-    if((prevObj[key].down==false)&&(controlsObj[key].down=true)){setControl(key, false);}
+    if((prevObj[key].down==true)&&(controlsObj[key].down==false)){setControl(key, false);}
+    if((prevObj[key].down==false)&&(controlsObj[key].down==true)){setControl(key, true);}
   }
   
 }
