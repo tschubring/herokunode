@@ -403,26 +403,27 @@ function touchEnd(e){
   processTouches(e.touches);
 }
 function processTouches(touches){
+  var nextObj=JSON.parse(JSON.stringify(controlsObj));
   var prevObj=JSON.parse(JSON.stringify(controlsObj));
   var keys=Object.keys(controlsObj);
 
   for (var k=0; k<keys.length; k++){
     var key=keys[k];
-    controlsObj[key].down=false;
+    nextObj[key].down=false;
   }
   for(var t=0; t<touches.length; t++){
     for (var k=0; k<keys.length; k++){
       var key=keys[k];
       var control=controlsObj[key];
       if((touches[t].screenX>control.l)&&(touches[t].screenX<control.r)&&(touches[t].screenY>control.t)&&(touches[t].screenY<control.b)){
-        controlsObj[key].down=true;
+        nextObj[key].down=true;
       }
     }
   }
   for (var k=0; k<keys.length; k++){
     var key=keys[k];
-    if((prevObj[key].down==true)&&(controlsObj[key].down==false)){setControl(key, false);}
-    if((prevObj[key].down==false)&&(controlsObj[key].down==true)){setControl(key, true);}
+    if((prevObj[key].down==true)&&(nextObj[key].down==false)){setControl(key, false);}
+    if((prevObj[key].down==false)&&(nextObj[key].down==true)){setControl(key, true);}
   }
   
 }
