@@ -267,10 +267,10 @@ function tick(){
         }
         else{// fire and hit test
           var triggered=false;
-          if(boats[b].missileX<(0-useSize/2)){triggered=true;}
-          if(boats[b].missileZ<(0-useSize/2)){triggered=true;}
-          if(boats[b].missileX>(useSize/2)){triggered=true;}
-          if(boats[b].missileZ>(useSize/2)){triggered=true;}
+          if(boats[b].missileX<(0-useSize/1.95)){triggered=true;}
+          if(boats[b].missileZ<(0-useSize/1.95)){triggered=true;}
+          if(boats[b].missileX>(useSize/1.95)){triggered=true;}
+          if(boats[b].missileZ>(useSize/1.95)){triggered=true;}
 
           for (var t=0; t<boats.length; t++){
             if(t !=b){
