@@ -189,7 +189,7 @@ function tick(){
         boats[b].iRads=xyxyToRads(0,0,sumX,sumY);
         boats[b].speed=Math.sqrt(sumX*sumX+sumY*sumY);
         var drag=1*carSize*(boats[b].speed/10);
-        if(boats[b].y==0){drag=drag/2;}
+        if(boats[b].y==0){drag=drag/3;}
         boats[b].speed-=drag;
       }
       boats[b].x+=xRadiansScale(boats[b].iRads, boats[b].speed);
