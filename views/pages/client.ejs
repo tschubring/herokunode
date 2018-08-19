@@ -316,9 +316,8 @@ function tick(){
 
 }
 
-
+var qrImage;
 function init(){
-  //initScene();
 }
 var controls;
 function initScene() {
@@ -365,6 +364,17 @@ controls.addEventListener('touchend', touchEnd, false);
   //controls.style.backgroundColor="rgba(255,0,0,.5)";
   controls.style.margin=0;
   controls.style.position="absolute";
+
+      qrImage = new Image();
+      document.getElementById('hideMe').appendChild(qrImage);
+      //createGeometryFromMap(ctx);
+      qrImage.onload=function(){
+        console.log('qrImage onload');
+        drawUi();
+      }
+      qrImage.src = "qr.png";
+
+
   // call the render function
   drawUi();
   render();
@@ -424,8 +434,15 @@ function processTouches(touches){
   }
   
 }
-
+var qrModal=false;
 var controlsObj={
+  "qr":{
+     keyCode:81,
+     down:false,
+     x:0, y:0, w:4,h:4,
+     t:0, r:0, b:0, l:0,
+     path:[[1,1],[3,1],[3,3],[1,3],[1,1]]
+  },
   "minus":{
      keyCode:189,
      down:false,
@@ -489,6 +506,14 @@ function setControl(key,value){
   drawUi();
 }
 function handleToggle(key,value){
+  if(qrModal){
+    key="qr";
+  }
+  if(key=="qr"){
+    if(value==true){
+      qrModal=!(qrModal);
+    }
+  }
   if(key=="plus"){
     if((camDist>8)&&(value==true)){camDist*=.5;}
   }
@@ -582,6 +607,21 @@ function drawUi(){
 
     ctx.fill();
   }
+  document.getElementById('debug').style.width=grid*4+"px";
+  document.getElementById('debug').style.fontSize=grid*1+"px";
+  document.getElementById('debug').style.left=(ww-grid*4)+"px";
+  document.getElementById('debug').style.top=(grid*14)+"px";
+  if(qrModal==false){
+    ctx.drawImage(qrImage,grid*1,grid*1,grid*2,grid*2);
+  } else {
+    if(wh>ww){//portrait
+      ctx.drawImage(qrImage,0,wh/2-ww/2,ww,ww);
+    } else{// lando
+      ctx.drawImage(qrImage,ww/2-wh/2,0,wh,wh);
+    }
+      
+  }
+
 }
 
 function downKey(e) {
@@ -729,7 +769,7 @@ setupSounds("sounds/", ["go.mp3", "click.mp3", "bell.mp3"]);
 -->    <div id="network"></div>
   </div>
 </div>
-    <div id="debug" style="position:absolute; display:none; background-color:black; color:white; z-index:100;">DEBUG</div>
+    <div id="debug" style="position:absolute; display:none; Zbackground-color:black; color:white; z-index:100; text-align:center;">DEBUG</div>
 
 </body>
 </html>

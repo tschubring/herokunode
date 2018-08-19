@@ -97,10 +97,17 @@ function islandFromSeeds(ctx, across, seeds){
     for(var y=0; y<cells*px; y+=px){
       var xFrac=.5-Math.cos(2*pi*x/across)/2;
       var yFrac=.5-Math.cos(2*pi*y/across)/2;
+/*
       var shapeFrac=Math.sin((y*xSkew+x+across/2)/(scale0+scale0*r1))/3+Math.cos((x*ySkew+y+across/2)/(scale0+scale0*r0))/3+.5+r2/2;
       var terrainFrac=Math.sin((y*ySkew+x+across/2)/(scale1+scale1*r3))/3+Math.cos((x*xSkew+y+across/2)/(scale1+scale1*r2))/3+.66;
       var noiseFrac=Math.sin((x+across/2)/(scale2+scale2*r5))/3+Math.cos((y+across/2)/(scale2+scale2*r4))/3+.75;
       var smallFrac=Math.sin((x+across/2)/(scale3+scale3*r7))/3+Math.cos((y+across/2)/(scale3+scale3*r6))/3+.5;
+*/
+
+      var shapeFrac=Math.sin((y*xSkew+x+across/2)/(scale0+scale0*r1))/2+Math.cos((x*ySkew+y+across/2)/(scale0+scale0*r0))/2+.75;
+      var terrainFrac=Math.sin((y*ySkew+x+across/2)/(scale1+scale1*r3))/2+Math.cos((x*xSkew+y+across/2)/(scale1+scale1*r2))/2+.75;
+      var noiseFrac=Math.sin((x+across/2)/(scale2+scale2*r5))/2+Math.cos((y+across/2)/(scale2+scale2*r4))/2+.75;
+      var smallFrac=Math.sin((x+across/2)/(scale3+scale3*r7))/2+Math.cos((y+across/2)/(scale3+scale3*r6))/2+.75;
       //shapeFrac=1;
       //smallFrac=1;
       //noiseFrac=1;
