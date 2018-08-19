@@ -554,14 +554,8 @@ function handleToggle(key,value){
   }
 }
 function drawUi(){
-  if((ww!=window.innerWidth)||(wh!=window.innerHeight)){  
-    ww=window.innerWidth;
-    wh=window.innerHeight;
-    renderer.domElement.style.height=wh+"px";
-    renderer.domElement.style.Width=ww+"px";
-    renderer.domElement.height=wh;
-    renderer.domElement.width=ww;
-  }
+  ww=window.innerWidth;
+  wh=window.innerHeight;
   var cellsAcross=24;
   var grid=ww/cellsAcross;
   if(ww>wh){grid=wh/cellsAcross;}
@@ -571,12 +565,12 @@ function drawUi(){
   ctx.strokeStyle="white";
   ctx.lineWidth=2;
   ctx.beginPath();
-  ctx.moveTo(ww-2*grid, grid*6);
-  ctx.lineTo(ww-2*grid, grid*14);
-  ctx.moveTo(ww-3*grid, grid*10);
-  ctx.lineTo(ww-1*grid, grid*10);
+  ctx.moveTo(ww-2*grid, wh-grid*8);
+  ctx.lineTo(ww-2*grid, wh-grid*16);
+  ctx.moveTo(ww-3*grid, wh-grid*12);
+  ctx.lineTo(ww-1*grid, wh-grid*12);
   ctx.stroke();
-  var yCenter=grid*10-boats[0].throttle*grid*4;
+  var yCenter=wh-grid*12-boats[0].throttle*grid*4;
   //dbug(boats[0].throttle);
 
   ctx.beginPath();
@@ -616,9 +610,9 @@ function drawUi(){
   document.getElementById('debug').style.width=grid*4+"px";
   document.getElementById('debug').style.fontSize=grid*1+"px";
   document.getElementById('debug').style.left=(ww-grid*4)+"px";
-  document.getElementById('debug').style.top=(grid*14)+"px";
+  document.getElementById('debug').style.top=wh-(grid*7)+"px";
   if(qrModal==false){
-    ctx.drawImage(qrImage,grid*1,grid*1,grid*2,grid*2);
+    ctx.drawImage(qrImage,grid*.5,grid*.5,grid*3,grid*3);
   } else {
     if(wh>ww){//portrait
       ctx.drawImage(qrImage,0,wh/2-ww/2,ww,ww);
@@ -656,6 +650,22 @@ function upKey(e) {
 } 
 
 function render() {
+  if((ww!=window.innerWidth)||(wh!=window.innerHeight)){  
+    ww=window.innerWidth;
+    wh=window.innerHeight;
+/*
+    renderer.domElement.style.height=wh+"px";
+    renderer.domElement.style.width=ww+"px";
+    renderer.domElement.height=wh;
+    renderer.domElement.width=ww;
+*/
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    drawUi();
+  }
+
   tick();
   renderer.render(scene, camera);
   requestAnimationFrame(render);
