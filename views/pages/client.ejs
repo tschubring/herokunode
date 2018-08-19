@@ -182,8 +182,8 @@ function tick(){
 
         var inX=Math.cos(boats[b].iRads)*boats[b].speed;
         var inY=-Math.sin(boats[b].iRads)*boats[b].speed;
-        var thX=Math.cos(boats[b].pitch)*boats[b].throttle*carSize*.05;
-        var thY=-Math.sin(boats[b].pitch)*boats[b].throttle*carSize*.05;
+        var thX=Math.cos(boats[b].pitch)*boats[b].throttle*carSize*.04;
+        var thY=-Math.sin(boats[b].pitch)*boats[b].throttle*carSize*.04;
         var sumX=inX+thX;
         var sumY=inY+thY;
         boats[b].iRads=xyxyToRads(0,0,sumX,sumY);
@@ -346,7 +346,7 @@ function initScene() {
   // add the output of the renderer to the html element
   document.body.appendChild(renderer.domElement);
   renderer.domElement.style.position="absolute";
-  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:0, z:0, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*3,missileIrads:0, missileFired:false, detonation:0}));
+  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:rnd(useSize-10)+5-useSize/2, z:rnd(useSize-10)+5-useSize/2, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*3,missileIrads:0, missileFired:false, detonation:0}));
 
   var ctx=canvas.getContext('2d');
   createGeometryFromMap(ctx);
