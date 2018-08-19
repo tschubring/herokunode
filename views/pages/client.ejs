@@ -554,8 +554,14 @@ function handleToggle(key,value){
   }
 }
 function drawUi(){
-  ww=window.innerWidth;
-  wh=window.innerHeight;
+  if((ww!=window.innerWidth)||(wh!=window.innerHeight)){  
+    ww=window.innerWidth;
+    wh=window.innerHeight;
+    renderer.domElement.style.height=wh+"px";
+    renderer.domElement.style.Width=ww+"px";
+    renderer.domElement.height=wh;
+    renderer.domElement.width=ww;
+  }
   var cellsAcross=24;
   var grid=ww/cellsAcross;
   if(ww>wh){grid=wh/cellsAcross;}
