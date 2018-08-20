@@ -148,6 +148,7 @@ function yRadiansScale(rads, scale){
    return Math.sin(rads)*scale;
 }
 function createGeometryFromMap(ctx) {
+// adapted from https://github.com/josdirksen/threejs-cookbook/blob/master/02-geometries-meshes/02.06-create-terrain-from-heightmap.html
   var depth = useSize;
   var width = useSize;
   var spacingX = 1;
@@ -226,11 +227,6 @@ function createGeometryFromMap(ctx) {
             mesh.translateZ(-zMax / 2);
             scene.add(mesh);
             mesh.name = 'valley';
-
-
-
-
-
 }
 function getHighPoint(geometry, face) {
   var v1 = geometry.vertices[face.a].y;
@@ -238,6 +234,8 @@ function getHighPoint(geometry, face) {
   var v3 = geometry.vertices[face.c].y;
   return Math.max(v1, v2, v3);
 }
+// end of cookbook code
+
 function worldAlt(worldX,worldZ){
   if(worldX===undefined){return 0;}
   //console.log(heightMap.length);
