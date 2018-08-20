@@ -191,8 +191,8 @@ function tick(){
         var sumY=inY+thY;
         boats[b].iRads=xyxyToRads(0,0,sumX,sumY);
         boats[b].speed=Math.sqrt(sumX*sumX+sumY*sumY);
-        var drag=1*carSize*(boats[b].speed/10);
-        if(boats[b].y==0){drag=drag/3;}
+        var drag=.75*carSize*(boats[b].speed/10);
+        if(boats[b].y==0){drag=drag/2;}
         boats[b].speed-=drag;
       }
       boats[b].x+=xRadiansScale(boats[b].iRads, boats[b].speed);
@@ -320,6 +320,7 @@ function tick(){
 }
 
 var qrImage;
+var qrThumb;
 function init(){
 }
 var controls;
@@ -371,11 +372,15 @@ controls.addEventListener('touchend', touchEnd, false);
       qrImage = new Image();
       document.getElementById('hideMe').appendChild(qrImage);
       //createGeometryFromMap(ctx);
-      qrImage.onload=function(){
-        console.log('qrImage onload');
+      qrImage.src = "qr.png";
+      qrThumb = new Image();
+      document.getElementById('hideMe').appendChild(qrThumb);
+      //createGeometryFromMap(ctx);
+      qrThumb.onload=function(){
+        console.log('qrThumb onload');
         drawUi();
       }
-      qrImage.src = "qr.png";
+      qrThumb.src = "qrthumb.png";
 
 
   // call the render function
@@ -615,9 +620,8 @@ function drawUi(){
   document.getElementById('debug').style.fontSize=grid*1+"px";
   document.getElementById('debug').style.left=(ww-grid*4)+"px";
   document.getElementById('debug').style.top=wh-(grid*7)+"px";
-  if(qrModal==false){
-    ctx.drawImage(qrImage,grid*.5,grid*.5,grid*3,grid*3);
-  } else {
+  ctx.drawImage(qrThumb,grid*.5,grid*.5,grid*3,grid*3);
+  if(qrModal){
     if(wh>ww){//portrait
       ctx.drawImage(qrImage,0,wh/2-ww/2,ww,ww);
     } else{// lando
