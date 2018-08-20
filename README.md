@@ -1,4 +1,4 @@
-# node-js-getting-started
+# herokunode
 
 Node.js app using WebSockets and three.js to create a multiplayer action game. 
 
@@ -10,5 +10,3 @@ Includes code from https://github.com/josdirksen/threejs-cookbook/blob/master/02
 
 Play the live project here on desktop or mobile browser: 
 https://sleepy-taiga-39265.herokuapp.com/client
-
-
