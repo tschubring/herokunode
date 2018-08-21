@@ -23,9 +23,10 @@
 
     Monotron.prototype.noteOn = function(frequency, time) {
       if (time == null) {
-        time = this.context.currentTime;
+        //time = this.context.currentTime;
       }
-      this.vco.frequency.setValueAtTime(frequency, time);
+      time += this.context.currentTime;
+      this.vco.frequency.linearRampToValueAtTime(frequency, time);
       return this.output.gain.linearRampToValueAtTime(1.0, time + 0.1);
     };
 
@@ -103,32 +104,33 @@
   $(function() {
     var audioContext, keyboard, knopfs, masterGain, params, playNote, pressed;
     audioContext = new (typeof AudioContext !== "undefined" && AudioContext !== null ? AudioContext : webkitAudioContext)();
-    window.monotron = new Monotron(audioContext);
+    
+    window.monotrons = [new Monotron(audioContext)];
     masterGain = audioContext.createGain();
     masterGain.gain.value = 0.7;
     masterGain.connect(audioContext.destination);
-    monotron.connect(masterGain);
-    keyboard = new RibbonKeyboard($('#keyboard'), monotron);
+    monotrons[0].connect(masterGain);
+    //keyboard = new RibbonKeyboard($('#keyboard'), monotrons[0]);
     params = {
       rate: {
-        param: monotron.lfo.frequency,
+        param: monotrons[0].lfo.frequency,
         min: 0.001,
         max: 900.0,
         scale: 1.1
       },
       int: {
-        param: monotron.lfoGain.gain,
+        param: monotrons[0].lfoGain.gain,
         min: 0.5,
         max: 500.0
       },
       cutoff: {
-        param: monotron.vcf.frequency,
+        param: monotrons[0].vcf.frequency,
         min: 0.001,
         max: 900.0,
         scale: 1.03
       },
       peak: {
-        param: monotron.vcf.Q,
+        param: monotrons[0].vcf.Q,
         min: 0.001,
         max: 1000.0,
         scale: 1.10
@@ -180,6 +182,7 @@
       return monotron.noteOn(noteToFrequency(57 + note));
     };
     pressed = [];
+/*
     $(window).keydown(function(e) {
       var code;
       code = e.keyCode;
@@ -200,6 +203,7 @@
         return playNote(pressed[pressed.length - 1]);
       }
     });
+*/
     return knopfs.forEach(function(knopf) {
       return knopf.changed(0);
     });

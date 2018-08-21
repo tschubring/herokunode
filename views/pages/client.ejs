@@ -129,6 +129,10 @@ function emitTick(){
   }  
   //console.log(dataObj);
   socket.emit("clientState", dataObj);  
+  var freq=20+10*boats[0].speed/.5;;
+  if(Math.abs(boats[0].throttle)==.5){freq=30+30*boats[0].speed/.5;}
+  if(Math.abs(boats[0].throttle)==1){freq=40+40*boats[0].speed/1;}
+  monotrons[0].noteOn(freq,.1);
   tickTimeout=window.setTimeout("emitTick()", 100);
 
 }
@@ -152,6 +156,16 @@ var camDist=32;
 var canvas;
 var myImage;
 var runnable=false;
+function reflectX(rads){
+  var inX=Math.cos(rads);
+  var inY=-Math.sin(rads);
+  return xyxyToRads(0,0,-inX,inY);
+}
+function reflectY(rads){
+  var inX=Math.cos(rads);
+  var inY=-Math.sin(rads);
+  return xyxyToRads(0,0,inX,-inY);
+}
 function tick(){
   var nowMs=new Date().getTime();
   boats[0].updated=nowMs;
@@ -198,10 +212,10 @@ function tick(){
       }
       boats[b].x+=xRadiansScale(boats[b].iRads, boats[b].speed);
       boats[b].z-=yRadiansScale(boats[b].iRads, boats[b].speed);
-      if(boats[b].x>half){boats[b].x=half;}
-      if(boats[b].x<0-half){boats[b].x=0-half;}
-      if(boats[b].z>half){boats[b].z=half;}
-      if(boats[b].z<0-half){boats[b].z=0-half;}
+      if(boats[b].x>half){boats[b].x=half; boats[b].iRads=reflectX(boats[b].iRads);}
+      if(boats[b].x<0-half){boats[b].x=0-half; boats[b].iRads=reflectX(boats[b].iRads);}
+      if(boats[b].z>half){boats[b].z=half; boats[b].iRads=reflectY(boats[b].iRads);}
+      if(boats[b].z<0-half){boats[b].z=0-half; boats[b].iRads=reflectY(boats[b].iRads);}
 
       boats[b].y=worldAlt(boats[b].x, boats[b].z);
 
