@@ -21,13 +21,13 @@
       this.lfo.start(this.context.currentTime);
     }
 
-    Monotron.prototype.noteOn = function(frequency, time) {
+    Monotron.prototype.noteOn = function(frequency, time, volume) {
       if (time == null) {
         //time = this.context.currentTime;
       }
       time += this.context.currentTime;
       this.vco.frequency.linearRampToValueAtTime(frequency, time);
-      return this.output.gain.linearRampToValueAtTime(1.0, time + 0.1);
+      return this.output.gain.linearRampToValueAtTime(volume, time + 0.1);
     };
 
     Monotron.prototype.noteOff = function(time) {

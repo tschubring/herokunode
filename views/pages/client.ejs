@@ -132,7 +132,7 @@ function emitTick(){
   var freq=20+10*boats[0].speed/.5;;
   if(Math.abs(boats[0].throttle)==.5){freq=30+30*boats[0].speed/.5;}
   if(Math.abs(boats[0].throttle)==1){freq=40+40*boats[0].speed/1;}
-  monotrons[0].noteOn(freq,.1);
+  monotrons[0].noteOn(freq,.1, .1+Math.abs(boats[0].throttle*.5));
   tickTimeout=window.setTimeout("emitTick()", 100);
 
 }
