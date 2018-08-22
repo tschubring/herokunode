@@ -58,7 +58,7 @@ io.on('connection', function(socket){
 
     var nowMs=new Date().getTime(); 
     var text  = "DELETE FROM test_users WHERE updated < $1";
-    var values = [nowMs-20000];
+    var values = [nowMs-60000];
     try {
       const client = await pool.connect();
       const result = await client.query(text, values);

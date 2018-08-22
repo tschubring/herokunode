@@ -22,9 +22,6 @@
     }
 
     Monotron.prototype.noteOn = function(frequency, time, volume) {
-      if (time == null) {
-        //time = this.context.currentTime;
-      }
       time += this.context.currentTime;
       this.vco.frequency.linearRampToValueAtTime(frequency, time);
       return this.output.gain.linearRampToValueAtTime(volume, time + 0.1);
@@ -105,11 +102,12 @@
     var audioContext, keyboard, knopfs, masterGain, params, playNote, pressed;
     audioContext = new (typeof AudioContext !== "undefined" && AudioContext !== null ? AudioContext : webkitAudioContext)();
     
-    window.monotrons = [new Monotron(audioContext)];
+    window.monotrons = [new Monotron(audioContext), new Monotron(audioContext)];
     masterGain = audioContext.createGain();
     masterGain.gain.value = 0.7;
     masterGain.connect(audioContext.destination);
     monotrons[0].connect(masterGain);
+    monotrons[1].connect(masterGain);
     //keyboard = new RibbonKeyboard($('#keyboard'), monotrons[0]);
     params = {
       rate: {

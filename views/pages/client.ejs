@@ -104,6 +104,7 @@ var saveMap="";
 var mapReceived=false;
 var sendTime=0;
 var tickTimeout;
+
 function emitTick(){
   window.clearTimeout(tickTimeout);
   //console.log('emitTick()');
@@ -133,10 +134,27 @@ function emitTick(){
   if(Math.abs(boats[0].throttle)==.5){freq=30+30*boats[0].speed/.5;}
   if(Math.abs(boats[0].throttle)==1){freq=40+40*boats[0].speed/1;}
   monotrons[0].noteOn(freq,.1, .1+Math.abs(boats[0].throttle*.5));
+  if(boats[0].missileFired){
+    if(boats[0].detonation>0){//explosion
+      //monotrons[1].noteOn(30,0, 1);
+    }
+    else{//drone
+       var dx=boats[0].x-boats[0].missileX;
+       var dz=boats[0].z-boats[0].missileZ;
+       var dist=Math.sqrt(dx*dx+dz*dz);
+       var frac=dist/750; // 0 to .5
+       var expo=Math.sin(pi*frac/2);
+       console.log(expo);
+       var inv=1-frac; // 1 to .5
+       var wav=0*Math.sin(pi*dist);
+       monotrons[1].noteOn(800-800*(expo),.05, .5-expo);
+    }
+  }
   tickTimeout=window.setTimeout("emitTick()", 100);
-
 }
 
+
+var detonationEnded=false;
 
 // begin copied from terrain2
 var pi=Math.PI;
@@ -243,9 +261,16 @@ function tick(){
         if(boats[b].detonation>0){//detonating
           boats[b].detonation-=.02;
           if(boats[b].detonation<=0){// completed detonation, reset
-            shouldDetonate=false;
             boats[b].missileFired=false;
             boats[b].detonation=0;
+            detonationEnded=true;
+            console.log('detonation ended '+boats[b].missileFired);
+            shouldDetonate=false;
+            if(b==0){
+              monotrons[1].noteOff(.1);
+              window.setTimeout("monotrons[1].noteOff(.1)",100);
+            }
+
             boats[b].missileX=boats[b].frontX;
             boats[b].missileZ=boats[b].frontZ;
             boats[b].missileY=boats[b].frontY+1;    
@@ -255,6 +280,8 @@ function tick(){
 
           }
           else{//display detonating
+            if(b==0){monotrons[1].noteOn((400+rnd(200))*boats[b].detonation,0,1);}
+
             var s=4*carSize*(1+6*(.5+(1-boats[b].detonation)));
             var o=(boats[b].detonation);
             boats[b].missileModel.scale.set(s,s,s);
@@ -281,6 +308,7 @@ function tick(){
           }
 
           if(triggered){
+
             shouldDetonate=false;
             boats[b].detonation=1
             for (var t=0; t<boats.length; t++){
@@ -365,7 +393,7 @@ function initScene() {
   // add the output of the renderer to the html element
   document.body.appendChild(renderer.domElement);
   renderer.domElement.style.position="absolute";
-  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:rnd(useSize-10)+5-useSize/2, z:rnd(useSize-10)+5-useSize/2, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*3,missileIrads:0, missileFired:false, detonation:0}));
+  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:rnd(useSize-10)+5-useSize/2, z:rnd(useSize-10)+5-useSize/2, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*4,missileIrads:0, missileFired:false, detonation:0}));
 
   var ctx=canvas.getContext('2d');
   createGeometryFromMap(ctx);
@@ -419,17 +447,17 @@ function touchStart(e){
     playSoundName("click");
     soundInited=true;
   }
-  console.log(e.touches);
+  //console.log(e.touches);
   processTouches(e.touches);
 }
 function touchMove(e){
   e.preventDefault ();
-  console.log(e.touches);
+  //console.log(e.touches);
   processTouches(e.touches);
 }
 function touchEnd(e){
   e.preventDefault ();
-  console.log(e.touches);
+  //console.log(e.touches);
   processTouches(e.touches);
 }
 function processTouches(touches){
@@ -569,6 +597,9 @@ function handleToggle(key,value){
     if(value==true){
       if(boats[0].missileFired==false){
         boats[0].missileFired=true;
+
+       monotrons[1].noteOn(1000-100*(1),0,1);
+
       }
       else{
         shouldDetonate=true;
@@ -649,7 +680,7 @@ function drawUi(){
 
 function downKey(e) {
   e.preventDefault();
-  console.log(e.keyCode);
+  //console.log(e.keyCode);
   var keys=Object.keys(controlsObj);
   for (var k=0; k<keys.length; k++){
     var key=keys[k];
@@ -661,7 +692,7 @@ function downKey(e) {
 }
 function upKey(e) {
   e.preventDefault();
-  console.log('up '+e.keyCode);
+  //console.log('up '+e.keyCode);
   var keys=Object.keys(controlsObj);
   for (var k=0; k<keys.length; k++){
     var key=keys[k];
@@ -774,7 +805,7 @@ class Sound {
   play() {
     this.init();
     this.source.start(this.context.currentTime);
-    console.log('uh '+this.buffer.duration);
+    //console.log('uh '+this.buffer.duration);
 
   }  
 
