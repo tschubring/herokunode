@@ -215,46 +215,89 @@ function tick(){
       }
       else{
         boats[b].pitch+=boats[b].control;
-
+        var rForce=.01;
         var inX=Math.cos(boats[b].iRads)*boats[b].speed;
-        var inY=-Math.sin(boats[b].iRads)*boats[b].speed;
+        var inZ=-Math.sin(boats[b].iRads)*boats[b].speed;
         var thX=Math.cos(boats[b].pitch)*boats[b].throttle*carSize*.04;
-        var thY=-Math.sin(boats[b].pitch)*boats[b].throttle*carSize*.04;
-        var sumX=inX+thX;
-        var sumY=inY+thY;
-        boats[b].iRads=xyxyToRads(0,0,sumX,sumY);
-        boats[b].speed=Math.sqrt(sumX*sumX+sumY*sumY);
-        var drag=.75*carSize*(boats[b].speed/10);
-        if(boats[b].y==0){drag=drag/2;}
-        boats[b].speed-=drag;
+        var thZ=-Math.sin(boats[b].pitch)*boats[b].throttle*carSize*.04;
+        var rX=0;
+        var rZ=0;
+        if(boats[b].onGround){
+          rX=rollX(boats[b].x, boats[b].z)*rForce;
+          rZ=rollY(boats[b].x, boats[b].z)*rForce;
+        }
+        var sumX=inX+thX-rX;
+        var sumZ=inZ+thZ-rZ;
+        boats[b].iRads=xyxyToRads(0,0,sumX,sumZ);
+        boats[b].speed=Math.sqrt(sumX*sumX+sumZ*sumZ);
       }
       boats[b].x+=xRadiansScale(boats[b].iRads, boats[b].speed);
       boats[b].z-=yRadiansScale(boats[b].iRads, boats[b].speed);
+
+      if(1==1){ 
+        var g=-.01;
+        boats[b].deltaY=worldAlt(boats[b].x, boats[b].z)-boats[b].alt; //world alt gain since last tick
+        boats[b].alt=worldAlt(boats[b].x, boats[b].z);  //the world alt where we are
+        if(boats[b].onGround==false){
+          boats[b].velY+=g;
+          boats[b].y+=boats[b].velY;
+          if(boats[b].y<boats[b].alt){
+            boats[b].onGround=true;
+            boats[b].y=boats[b].alt;
+          }
+        }// airborn
+        else{// onGround
+          boats[b].y=boats[b].alt;
+            if(boats[b].deltaY>boats[b].velY){// gain velY only on leave ground
+              boats[b].velY=boats[b].deltaY;
+            }
+
+          if(boats[b].deltaY<boats[b].velY+g){
+            boats[b].onGround=false;
+            boats[b].velY+=g;
+            boats[b].y+=boats[b].velY;
+          }
+        }
+        var drag=.5*carSize*(boats[b].speed/10);
+        if(boats[b].onGround==false){
+          drag=drag/2;
+        }
+        else{//onGround
+          if(boats[b].deltaY>0){boats[b].speed-=boats[b].deltaY/6;}// 
+          if(boats[b].y==0){
+            drag=drag/1.5;
+          }
+        }
+        boats[b].speed-=drag;
+        
+      }
+
+      // bounce off walls
       if(boats[b].x>half){boats[b].x=half; boats[b].iRads=reflectX(boats[b].iRads);}
       if(boats[b].x<0-half){boats[b].x=0-half; boats[b].iRads=reflectX(boats[b].iRads);}
       if(boats[b].z>half){boats[b].z=half; boats[b].iRads=reflectY(boats[b].iRads);}
       if(boats[b].z<0-half){boats[b].z=0-half; boats[b].iRads=reflectY(boats[b].iRads);}
+      
+      //boats[b].y+=boats[b].deltaY;
+      if(boats[b].onGround){
+        boats[b].frontX=boats[b].x+xRadiansScale(boats[b].pitch, carSize*6);
+        boats[b].frontZ=boats[b].z-yRadiansScale(boats[b].pitch, carSize*6);
+        boats[b].frontY=worldAlt(boats[b].frontX, boats[b].frontZ)+boats[b].y-boats[b].alt;
+        boats[b].backX=boats[b].x+xRadiansScale(boats[b].pitch-pi, carSize*6);
+        boats[b].backZ=boats[b].z-yRadiansScale(boats[b].pitch-pi, carSize*6);
+        boats[b].backY=worldAlt(boats[b].backX, boats[b].backZ)+boats[b].y-boats[b].alt;
+        boats[b].leftX=boats[b].x+xRadiansScale(boats[b].pitch+pi/2, carSize*3);
+        boats[b].leftZ=boats[b].z-yRadiansScale(boats[b].pitch+pi/2, carSize*3);
+        boats[b].leftY=worldAlt(boats[b].leftX, boats[b].leftZ)+boats[b].y-boats[b].alt;
+        boats[b].rightX=boats[b].x+xRadiansScale(boats[b].pitch-pi/2, carSize*3);
+        boats[b].rightZ=boats[b].z-yRadiansScale(boats[b].pitch-pi/2, carSize*3);
+        boats[b].rightY=worldAlt(boats[b].rightX, boats[b].rightZ)+boats[b].y-boats[b].alt;
+      }
 
-      boats[b].y=worldAlt(boats[b].x, boats[b].z);
-
-
-      boats[b].frontX=boats[b].x+xRadiansScale(boats[b].pitch, carSize*6);
-      boats[b].frontZ=boats[b].z-yRadiansScale(boats[b].pitch, carSize*6);
-      boats[b].frontY=worldAlt(boats[b].frontX, boats[b].frontZ);
-
-      boats[b].backX=boats[b].x+xRadiansScale(boats[b].pitch-pi, carSize*6);
-      boats[b].backZ=boats[b].z-yRadiansScale(boats[b].pitch-pi, carSize*6);
-      boats[b].backY=worldAlt(boats[b].backX, boats[b].backZ);
-      boats[b].leftX=boats[b].x+xRadiansScale(boats[b].pitch+pi/2, carSize*3);
-      boats[b].leftZ=boats[b].z-yRadiansScale(boats[b].pitch+pi/2, carSize*3);
-      boats[b].leftY=worldAlt(boats[b].leftX, boats[b].leftZ);
-      boats[b].rightX=boats[b].x+xRadiansScale(boats[b].pitch-pi/2, carSize*3);
-      boats[b].rightZ=boats[b].z-yRadiansScale(boats[b].pitch-pi/2, carSize*3);
-      boats[b].rightY=worldAlt(boats[b].rightX, boats[b].rightZ);
       if(boats[b].missileFired==false){
-        boats[b].missileX=boats[b].frontX;
-        boats[b].missileZ=boats[b].frontZ;
-        boats[b].missileY=boats[b].frontY+carSize;    
+        boats[b].missileX=boats[b].x;
+        boats[b].missileZ=boats[b].z;
+        boats[b].missileY=boats[b].y+carSize;    
         boats[b].missileIrads=boats[b].pitch;    
       }
       else{// missile is fired
@@ -326,6 +369,17 @@ function tick(){
             }
           }
           else{//carry on.
+
+        var rForce=.1;
+        var inX=Math.cos(boats[b].missileIrads)*boats[b].missileSpeed;
+        var inY=-Math.sin(boats[b].missileIrads)*boats[b].missileSpeed;
+        var rX=rollX(boats[b].missileX, boats[b].missileZ)*rForce;
+        var rY=rollY(boats[b].missileX, boats[b].missileZ)*rForce;
+        var sumX=inX-rX;
+        var sumY=inY-rY;
+        boats[b].missileIrads=xyxyToRads(0,0,sumX,sumY);
+
+
             boats[b].missileX+=xRadiansScale(boats[b].missileIrads, boats[b].missileSpeed);
             boats[b].missileZ-=yRadiansScale(boats[b].missileIrads, boats[b].missileSpeed);
             boats[b].missileY=worldAlt(boats[b].missileX, boats[b].missileZ)+1;
@@ -336,8 +390,12 @@ function tick(){
       }
     }
   }
-        dbug(Math.floor(boats[0].speed*100));
-
+  dbug(Math.floor(boats[0].speed*100));
+  //dbug("deltaY: "+Math.floor(boats[0].deltaY*100)/100);
+  //dbuga("alt: "+Math.floor(boats[0].alt*100)/100);
+  //dbuga("velY: "+Math.floor(boats[0].velY*100)/100);
+  //dbuga("onGround: "+boats[0].onGround);
+  
   for (var b=0; b<boats.length; b++){
     if(boats[b].loaded){
       boats[b].missileModel.position.x=boats[b].missileX;
@@ -361,7 +419,16 @@ function tick(){
   }
 
 }
-
+function rollX(x,y){
+  var a1=worldAlt(Math.floor(x+1), y);
+  var a2=worldAlt(Math.floor(x), y);
+  return radsOfRise(a1-a2);
+}
+function rollY(x,y){
+  var a1=worldAlt(x, Math.floor(y+1));
+  var a2=worldAlt(x, Math.floor(y));
+  return radsOfRise(a1-a2);
+}
 var qrImage;
 var qrThumb;
 function init(){
@@ -393,7 +460,10 @@ function initScene() {
   // add the output of the renderer to the html element
   document.body.appendChild(renderer.domElement);
   renderer.domElement.style.position="absolute";
-  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, x:rnd(useSize-10)+5-useSize/2, z:rnd(useSize-10)+5-useSize/2, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*4,missileIrads:0, missileFired:false, detonation:0}));
+  var newX=rnd(useSize-10)+5-useSize/2;
+  var newZ=rnd(useSize-10)+5-useSize/2;
+  var newY=0;//worldAlt(newX,newZ);
+  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, onGround:true, velY:0, x:newX, z:newZ, y:newY, alt:newY, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*4,missileIrads:0, missileFired:false, detonation:0}));
 
   var ctx=canvas.getContext('2d');
   createGeometryFromMap(ctx);
@@ -820,7 +890,9 @@ var fxBuffer;
 var soundNumByName={}
   
 setupSounds("sounds/", ["go.mp3", "click.mp3", "bell.mp3"]);  
-
+function radsOfRise(rise){
+  return pi/2-Math.atan2(1, rise);
+}
 </script>
 <body onload="init()">
 
