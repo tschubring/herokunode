@@ -34,10 +34,10 @@ function newBoat(conf){
 
        var loader = new THREE.OBJLoader();
        loader.load('libs/airboat.obj',  function ( object ) {
-          console.log("num "+conf.num);
+          console.log("loader num "+conf.num);
 
           boat=object;
-          //console.log(piece);
+          console.log(boat);
         
           boat.scale.x=carSize;
           boat.scale.y=carSize;

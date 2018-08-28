@@ -56,6 +56,9 @@ socket.on('clientState', function(data) {
           boats[ord].speed=user.speed;
           boats[ord].x=user.x;
           boats[ord].z=user.z;
+          boats[ord].y=user.y;
+          boats[ord].alt=user.alt;
+          boats[ord].velY=user.velY;
           boats[ord].missileX=user.missileX;
           boats[ord].missileY=user.missileY;
           boats[ord].missileZ=user.missileZ;
@@ -120,6 +123,9 @@ function emitTick(){
     throttle:boats[0].throttle,
     x:boats[0].x,
     z:boats[0].z,
+    y:boats[0].y,
+    velY:boats[0].velY,
+    alt:boats[0].alt,
     missileX:boats[0].missileX,
     missileY:boats[0].missileY,
     missileZ:boats[0].missileZ,

@@ -147,7 +147,7 @@ console.log('monotrons.js');
     audioContext = new AudioContext();
 
     masterGain = audioContext.createGain();
-    masterGain.gain.value = 0.7;
+    masterGain.gain.value = 0.2;
 
     delay = audioContext.createDelay();
     delay.delayTime.value = 0.333;
