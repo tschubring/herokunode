@@ -31,14 +31,30 @@ function newBoat(conf){
   conf.carPitch=carPitch;
   conf.carYaw=carYaw;
 
-  conf.motor=returnMonotronInstance(true);
+
+        conf.frontX=conf.x;
+        conf.frontZ=conf.z
+        conf.frontY=conf.y;
+        conf.backX=conf.x;
+        conf.backZ=conf.z;
+        conf.backY=conf.y;
+        conf.leftX=conf.x;
+        conf.leftZ=conf.z;
+        conf.leftY=conf.y;
+        conf.rightX=conf.x;
+        conf.rightZ=conf.z;
+        conf.rightY=conf.y;
+
+
+
+  if(conf.num==0){conf.motor=returnMonotronInstance(true);}
   //conf.plasma=returnMonotronInstance(true);
 
        var loader = new THREE.OBJLoader();
        loader.load('libs/airboat.obj',  function ( object ) {
-          //console.log("loader num "+conf.num);
+          console.log("loader num "+conf.num + " "+(boats.length-1));
 
-          boat=object;
+          var boat=object;
           //console.log(boat);
         
           boat.scale.x=carSize;
@@ -54,11 +70,13 @@ function newBoat(conf){
           boats[boats.length-1].carRoll.add(boat);
           boats[boats.length-1].model=boat;
           boats[boats.length-1].loaded=true;
-          
+          if(conf.num==0){resumeInit();}
 
         });
+  console.log(conf);
 
   return conf;
+  
 }
 
 function dbug(str){

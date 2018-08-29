@@ -83,10 +83,9 @@ socket.on('clientState', function(data) {
       heightCanvas.width = useSize;
       heightCanvas.height = useSize;
       document.getElementById('hideMe').appendChild(heightCanvas);
-      heightCanvas.onmousedown=function(){
-        startSim();
-      }
-      //startSim();
+      //heightCanvas.onmousedown=function(){
+      //  startSim();
+      //}
 
 
       colorCanvas = document.createElement('canvas');
@@ -511,6 +510,8 @@ function initScene() {
   newZ=170*Math.sin(pi*deg/180);
   var newY=0;//worldAlt(newX,newZ);
   boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, onGround:true, velY:0, x:newX, z:newZ, y:newY, alt:newY, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*4,missileIrads:0, missileFired:false, detonation:0}));
+}
+function resumeInit(){
 
   createGeometryFromMap();
 
@@ -541,14 +542,15 @@ controls.addEventListener('touchend', touchEnd, false);
   qrThumb.src = "qrthumb.png";
   document.onkeydown = downKey;
   document.onkeyup = upKey;
+  startSim();
 }
 function startSim(){
+  document.getElementById('hideMe').style.display="none";
   // call the render function
   drawUi();
   render();
   //playSoundName("go");
-  boats[0].motor.pitchOn(40, 1000, .1, 0, 0, 1, false);
-  document.getElementById('hideMe').style.display="none";
+  //boats[0].motor.pitchOn(40, 1000, .1, 0, 0, 1, false);
   tickTimeout=window.setTimeout("emitTick()", 100);
   //window.setTimeout("window.location.reload()",60000);
 }
