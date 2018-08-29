@@ -35,7 +35,7 @@ console.log('monotrons.js');
 
       this.vcoGain = this.context.createGain();
       this.vcf = this.context.createBiquadFilter();
-      this.panner = this.context.createStereoPanner();
+      ////this.panner = this.context.createStereoPanner();
       this.output = this.context.createGain();
       this.noiseGain = this.context.createGain();
 
@@ -43,8 +43,8 @@ console.log('monotrons.js');
       this.noiseGain.connect(this.vcf);
       this.vco.connect(this.vcoGain);
       this.vcoGain.connect(this.vcf);
-      this.vcf.connect(this.panner);
-      this.panner.connect(this.output);
+      ////this.vcf.connect(this.panner);
+      ////this.panner.connect(this.output);
       this.vcf.connect(this.output);
       this.vco.frequency.value=1;
       this.output.gain.value = 0;
@@ -64,7 +64,7 @@ console.log('monotrons.js');
         this.vco.frequency.linearRampToValueAtTime(frequency, useTime);
         this.vcf.frequency.linearRampToValueAtTime(filter, useTime);
         this.vcf.Q.linearRampToValueAtTime(q, useTime);
-        this.panner.pan.linearRampToValueAtTime(pan, useTime);
+        ////this.panner.pan.linearRampToValueAtTime(pan, useTime);
       }
       if(decays){
         this.output.gain.value=1;
@@ -82,7 +82,7 @@ console.log('monotrons.js');
         this.vco.frequency.linearRampToValueAtTime(frequency, useTime);
         this.vcf.frequency.linearRampToValueAtTime(filter, useTime);
         this.vcf.Q.linearRampToValueAtTime(q, useTime);
-        this.panner.pan.linearRampToValueAtTime(pan, useTime);
+        ////this.panner.pan.linearRampToValueAtTime(pan, useTime);
       }
       if(decays){
         this.output.gain.value=1;
