@@ -10,7 +10,7 @@
     <script src="libs/three.min.js"></script>
     <script src="libs/OBJLoader.js"></script>
     <script src="libs/display.js"></script>
-    <script src="libs/monotron.js"></script>
+    <script src="libs/monotrons.js"></script>
 <script>
 //var srch=window.location.search.replace("?", "");
 //var sets=srch.split("&");
@@ -38,11 +38,11 @@ socket.on('clientState', function(data) {
     }    
     var user=data;
     if(userIds.indexOf(user.userId)==-1){
-      console.log("client.ejs roomState create "+boats.length+" "+runnable);
+     // console.log("client.ejs roomState create "+boats.length+" "+runnable);
       user.num=boats.length;
       user.updated=nowMs;
       boats.push(newBoat(user));
-      playSoundName("go");
+      //playSoundName("go");
     }
     else{
       if(user.userId != myUserId){
@@ -79,29 +79,53 @@ socket.on('clientState', function(data) {
       mySeeds=JSON.parse(data.seeds);
       mapReceived=true;
 
-      canvas = document.createElement('canvas');
-      canvas.width = useSize;
-      canvas.height = useSize;
-      var ctx = canvas.getContext('2d');
-      console.log(mySeeds);
-      islandFromSeeds(ctx,useSize, mySeeds);
+      heightCanvas = document.createElement('canvas');
+      heightCanvas.width = useSize;
+      heightCanvas.height = useSize;
+      document.getElementById('hideMe').appendChild(heightCanvas);
+      heightCanvas.onmousedown=function(){
+        startSim();
+      }
+      //startSim();
 
-      var pixel = canvas.toDataURL();
+
+      colorCanvas = document.createElement('canvas');
+      colorCanvas.width = useSize;
+      colorCanvas.height = useSize;
+      document.getElementById('hideMe').appendChild(colorCanvas);
+
+      console.log(mySeeds);
+      finish = new Image();
+      finish.onload=function(){
+        console.log('finish onload');
+        islandFromSeeds(useSize, mySeeds);
+        initScene();
+        
+      }
+      finish.src = "finish.png";
+      
+/*
+      var pixel = heightCanvas.toDataURL();
       console.log(typeof pixel);
       myImage = new Image();
+      myImage.id="mapImage";
       document.getElementById('hideMe').appendChild(myImage);
-      //createGeometryFromMap(ctx);
       myImage.onload=function(){
         console.log('myImage onload');
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(myImage, 0, 0);
+        var heightCtx = heightCanvas.getContext('2d');
+        heightCtx.drawImage(myImage, 0, 0);
         initScene();
+        
       }
       myImage.src = pixel;
-
+      myImage.onmousedown=function(){
+        startSim();
+      }
+*/
+      //initScene();
     }
   });
-
+var finish;
 var mySeeds=[.5,.5,.5,.5,.5,.5,.5,.5,.5,.5,.5,.5];
 var saveMap="";
 var mapReceived=false;
@@ -134,11 +158,19 @@ function emitTick(){
     missileFired:boats[0].missileFired,
     detonation:boats[0].detonation
   }  
-  //console.log(dataObj);
   socket.emit("clientState", dataObj);  
-  var freq=20+10*boats[0].speed/.5;;
+
+
+  var freq=20+10*boats[0].speed/.5;
   if(Math.abs(boats[0].throttle)==.5){freq=30+30*boats[0].speed/.5;}
   if(Math.abs(boats[0].throttle)==1){freq=40+40*boats[0].speed/1;}
+  if(boats[0].onGround){
+    boats[0].motor.pitchOn(freq, 400+400*boats[0].speed, .1, 0, .5, .5, false);
+  } else{
+    boats[0].motor.pitchOn(freq, 400+400*boats[0].speed, .1, 0, 0, .5, false);
+  }
+
+/*
   monotrons[0].noteOn(freq,.1, .1+Math.abs(boats[0].throttle*.5));
   if(boats[0].missileFired){
     if(boats[0].detonation>0){//explosion
@@ -156,6 +188,7 @@ function emitTick(){
        monotrons[1].noteOn(800-800*(expo),.05, .5-expo);
     }
   }
+*/
   tickTimeout=window.setTimeout("emitTick()", 100);
 }
 
@@ -167,7 +200,6 @@ var pi=Math.PI;
 var useSize=512;
 var dist=useSize/2;
 var heightOffset=12;
-var heightMap=[];
 var mode="player";
 var renderer;
 var scene;
@@ -177,7 +209,6 @@ var minVal=1000;
 var maxVal=0;
 var boats=[];
 var camDist=32;
-var canvas;
 var myImage;
 var runnable=false;
 function reflectX(rads){
@@ -256,6 +287,10 @@ function tick(){
           boats[b].y=boats[b].alt;
             if(boats[b].deltaY>boats[b].velY){// gain velY only on leave ground
               boats[b].velY=boats[b].deltaY;
+              if(boats[b].velY>boats[b].speed){
+                boats[b].velY=boats[b].speed;
+                console.log('clipped velY');
+              }
             }
 
           if(boats[b].deltaY<boats[b].velY+g){
@@ -266,7 +301,7 @@ function tick(){
         }
         var drag=.5*carSize*(boats[b].speed/10);
         if(boats[b].onGround==false){
-          drag=drag/2;
+          drag=drag/3;
         }
         else{//onGround
           if(boats[b].deltaY>0){boats[b].speed-=boats[b].deltaY/6;}// 
@@ -313,11 +348,11 @@ function tick(){
             boats[b].missileFired=false;
             boats[b].detonation=0;
             detonationEnded=true;
-            console.log('detonation ended '+boats[b].missileFired);
+            //console.log('detonation ended '+boats[b].missileFired);
             shouldDetonate=false;
             if(b==0){
-              monotrons[1].noteOff(.1);
-              window.setTimeout("monotrons[1].noteOff(.1)",100);
+              ////monotrons[1].noteOff(.1);
+              ////window.setTimeout("monotrons[1].noteOff(.1)",100);
             }
 
             boats[b].missileX=boats[b].frontX;
@@ -329,7 +364,7 @@ function tick(){
 
           }
           else{//display detonating
-            if(b==0){monotrons[1].noteOn((400+rnd(200))*boats[b].detonation,0,1);}
+            ////if(b==0){monotrons[1].noteOn((400+rnd(200))*boats[b].detonation,0,1);}
 
             var s=4*carSize*(1+6*(.5+(1-boats[b].detonation)));
             var o=(boats[b].detonation);
@@ -437,6 +472,9 @@ function rollY(x,y){
 }
 var qrImage;
 var qrThumb;
+var heightCanvas;
+var colorCanvas;
+
 function init(){
 }
 var controls;
@@ -452,27 +490,29 @@ function initScene() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   // add light
   var light = new THREE.DirectionalLight();
-  light.position.set(1200, 1200, 1200);
+  light.position.set(1200,1200,1200);
   scene.add(light);
-  var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
+  var alight = new THREE.AmbientLight( 0xffffff ); // soft white light
   scene.add( alight );
   // position and point the camera to the center of the scene
   camera.position.x = 0;
   camera.position.y = 640;
   camera.position.z = 0;
   camera.lookAt(scene.position);
-        camera.rotation.z=pi/2;
+  camera.rotation.z=pi/2;
 
   // add the output of the renderer to the html element
   document.body.appendChild(renderer.domElement);
   renderer.domElement.style.position="absolute";
   var newX=rnd(useSize-10)+5-useSize/2;
   var newZ=rnd(useSize-10)+5-useSize/2;
+  var deg=rnd(360);
+  newX=170*Math.cos(pi*deg/180);
+  newZ=170*Math.sin(pi*deg/180);
   var newY=0;//worldAlt(newX,newZ);
   boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, onGround:true, velY:0, x:newX, z:newZ, y:newY, alt:newY, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*4,missileIrads:0, missileFired:false, detonation:0}));
 
-  var ctx=canvas.getContext('2d');
-  createGeometryFromMap(ctx);
+  createGeometryFromMap();
 
   controls = document.createElement('canvas');
   document.body.appendChild(controls); // adds the canvas to the body element
@@ -490,29 +530,26 @@ controls.addEventListener('touchend', touchEnd, false);
 
       qrImage = new Image();
       document.getElementById('hideMe').appendChild(qrImage);
-      //createGeometryFromMap(ctx);
       qrImage.src = "qr.png";
       qrThumb = new Image();
       document.getElementById('hideMe').appendChild(qrThumb);
-      //createGeometryFromMap(ctx);
+   
       qrThumb.onload=function(){
-        console.log('qrThumb onload');
+        //console.log('qrThumb onload');
         drawUi();
       }
-      qrThumb.src = "qrthumb.png";
-
-
+  qrThumb.src = "qrthumb.png";
+  document.onkeydown = downKey;
+  document.onkeyup = upKey;
+}
+function startSim(){
   // call the render function
   drawUi();
   render();
-      playSoundName("go");
-
-        document.getElementById('hideMe').style.display="none";
-
-  document.onkeydown = downKey;
-  document.onkeyup = upKey;
+  //playSoundName("go");
+  boats[0].motor.pitchOn(40, 1000, .1, 0, 0, 1, false);
+  document.getElementById('hideMe').style.display="none";
   tickTimeout=window.setTimeout("emitTick()", 100);
-
   //window.setTimeout("window.location.reload()",60000);
 }
 var soundInited=false;
@@ -520,7 +557,7 @@ function updateProgress(){}
 function touchStart(e){
   e.preventDefault ();
   if(soundInited==false){
-    playSoundName("click");
+    //playSoundName("click");
     soundInited=true;
   }
   //console.log(e.touches);
@@ -674,7 +711,8 @@ function handleToggle(key,value){
       if(boats[0].missileFired==false){
         boats[0].missileFired=true;
 
-       monotrons[1].noteOn(1000-100*(1),0,1);
+       //monotrons[0].noteOn(1000-100*(1),0,1);
+       //boats[0].plasma.pitchOn(1000-100*(1), 1000, 2, 0, 1, 1, false);
 
       }
       else{
@@ -800,6 +838,8 @@ function render() {
   renderer.render(scene, camera);
   requestAnimationFrame(render);
 }
+
+/*
 function playSoundNum(num, ends){
   var sound = new Sound(fxContext, fxBuffer.getSoundByIndex(num), ends);
   sound.play();
@@ -809,6 +849,7 @@ function playSoundName(name){
 }
 
 function setupSounds(path, soundNames){
+
   var sounds=[];
   for(var n=0; n<soundNames.length; n++){
     var clean=soundNames[n].replace(".mp3", "");
@@ -819,6 +860,7 @@ function setupSounds(path, soundNames){
 
   fxBuffer = new Buffer(fxContext, sounds);
   fxBuffer.loadAll();
+
 }
 
 class Buffer {
@@ -896,6 +938,8 @@ var fxBuffer;
 var soundNumByName={}
   
 setupSounds("sounds/", ["go.mp3", "click.mp3", "bell.mp3"]);  
+*/
+
 function radsOfRise(rise){
   return pi/2-Math.atan2(1, rise);
 }

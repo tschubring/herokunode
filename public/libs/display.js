@@ -3,7 +3,7 @@ var carSize=.2;
 var maxSpeed=.3;
 
 function newBoat(conf){
-  console.log(conf);
+  //console.log(conf);
   var trans=new THREE.MeshPhongMaterial({"emissive":new THREE.Color("rgb(32,32,32)"), "color":new THREE.Color("rgb(255,255,0)"), "opacity":.5,   "transparent":true});
   var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
 
@@ -31,13 +31,15 @@ function newBoat(conf){
   conf.carPitch=carPitch;
   conf.carYaw=carYaw;
 
+  conf.motor=returnMonotronInstance(true);
+  //conf.plasma=returnMonotronInstance(true);
 
        var loader = new THREE.OBJLoader();
        loader.load('libs/airboat.obj',  function ( object ) {
-          console.log("loader num "+conf.num);
+          //console.log("loader num "+conf.num);
 
           boat=object;
-          console.log(boat);
+          //console.log(boat);
         
           boat.scale.x=carSize;
           boat.scale.y=carSize;
@@ -70,7 +72,7 @@ function rnd(range){
   return Math.floor(Math.random()*range);
 }
 
-function islandFromSeeds(ctx, across, seeds){
+function islandFromSeeds(across, seeds){
   var r0=seeds[0];
   var r1=seeds[1];
   var r2=seeds[2];
@@ -79,6 +81,12 @@ function islandFromSeeds(ctx, across, seeds){
   var r5=seeds[5];
   var r6=seeds[6];
   var r7=seeds[7];
+
+  var heightCtx=heightCanvas.getContext('2d');
+  var colorCtx=colorCanvas.getContext('2d');
+
+  var depth = useSize;
+  var width = useSize;
 
   var xSkew=seeds[8]-.5;
   var ySkew=seeds[9]-.5;
@@ -100,12 +108,6 @@ function islandFromSeeds(ctx, across, seeds){
 
       var xFrac=.5-Math.cos(pi*9/6+3*pi*x/across)/2;
       var yFrac=.5-Math.cos(pi*9/6+3*pi*y/across)/2;
-/*
-      var shapeFrac=Math.sin((y*xSkew+x+across/2)/(scale0+scale0*r1))/3+Math.cos((x*ySkew+y+across/2)/(scale0+scale0*r0))/3+.5+r2/2;
-      var terrainFrac=Math.sin((y*ySkew+x+across/2)/(scale1+scale1*r3))/3+Math.cos((x*xSkew+y+across/2)/(scale1+scale1*r2))/3+.66;
-      var noiseFrac=Math.sin((x+across/2)/(scale2+scale2*r5))/3+Math.cos((y+across/2)/(scale2+scale2*r4))/3+.75;
-      var smallFrac=Math.sin((x+across/2)/(scale3+scale3*r7))/3+Math.cos((y+across/2)/(scale3+scale3*r6))/3+.5;
-*/
 
       var shapeFrac=Math.sin((y*xSkew+x+across/2)/(scale0+scale0*r1))/2+Math.cos((x*ySkew+y+across/2)/(scale0+scale0*r0))/2+.75;
       var terrainFrac=Math.sin((y*ySkew+x+across/2)/(scale1+scale1*r3))/2+Math.cos((x*xSkew+y+across/2)/(scale1+scale1*r2))/2+.75;
@@ -127,16 +129,40 @@ function islandFromSeeds(ctx, across, seeds){
       if(val<0){
         val=0;
       }
-      if(val>-1){
-        ctx.fillStyle="rgb("+val+","+val+","+val+")";
+      if(val>0){
+        colorCtx.fillStyle="rgb("+val+",200,"+val+")";
       }
       else{
-        ctx.fillStyle="rgb(0,0,255)";
+        var w=Math.floor(50*(Math.cos(pi*x/10)/2+.5));
+        colorCtx.fillStyle="rgb("+w+","+w+",255)";
       }
-      ctx.fillRect(x,y,px,px);
+      heightCtx.fillStyle="rgb("+val+","+val+","+val+")";
+
+      if((x>240)&&(x<270)){
+        if(((y>75)&&(y<95))||((y>415)&&(y<435))){
+          val=6*(15-Math.abs(x-255));
+          heightCtx.fillStyle="rgb("+val+","+val+","+val+")";
+          colorCtx.fillStyle="rgb(255,0,0)";
+        }
       }
+
+
+      colorCtx.fillRect(x,y,px,px);
+      heightCtx.fillRect(x,y,px,px);
+    }
+  colorCtx.drawImage(finish, 50,255);
+  //ctx.putImageData(pixel,0,0);
   }
 }
+//ramps
+/*
+      if((x>250)&&(x<260)){
+        if(((y>80)&&(y<90))||((y>420)&&(y<430))){
+          val=5*(5-Math.abs(x-255));
+          ctx.fillStyle="rgba("+val+",255,0,"+val/255+")";
+        }
+      }
+*/
 
 function xyxyToRads(x1,y1,x2,y2){
   var deltaX = x2 - x1;
@@ -150,36 +176,36 @@ function xRadiansScale(rads, scale){
 function yRadiansScale(rads, scale){
    return Math.sin(rads)*scale;
 }
-function createGeometryFromMap(ctx) {
+var heightMap=[];
+var colorMap=[];
+
+function createGeometryFromMap() {
 // adapted from https://github.com/josdirksen/threejs-cookbook/blob/master/02-geometries-meshes/02.06-create-terrain-from-heightmap.html
   var depth = useSize;
   var width = useSize;
   var spacingX = 1;
   var spacingZ = 1;
-            var pixel = ctx.getImageData(0, 0, width, depth);
+  var heightCtx=heightCanvas.getContext('2d');
+  var colorCtx=colorCanvas.getContext('2d');
+            var heightPixel = heightCtx.getImageData(0, 0, width, depth);
+            var colorPixel = colorCtx.getImageData(0, 0, width, depth);
             var geom = new THREE.Geometry;
             var output = [];
             for (var x = 0; x < depth; x++) {
-                var row=[];
+                var heightRow=[];
+                var colorRow=[];
                 for (var z = 0; z < width; z++) {
                     // get pixel
                     var roadWidth=48;
                     var roadThresh=2;
                     // since we're grayscale, we only need one element
-                    var yValue = pixel.data[(width-z) * 4 + (depth * x * 4)] / heightOffset;
-
-                    //if((yValue >15)&&(yValue<16.5)&&((x/2)%roadWidth>roadThresh)&&((z/2)%roadWidth>roadThresh)){yValue=18;}
-                    if(((x/2)%roadWidth<=roadThresh)||((z/2)%roadWidth<=roadThresh)){
-                      if(yValue>15){
-                        //yValue=Math.floor(yValue/2)*2;
-                      }
-                      else{
-                        //yValue*=.97;
-                      }
-                    }
-
-
-                    row.push(yValue);
+                    
+                    var r = colorPixel.data[(width-z) * 4 + (depth * x * 4)];
+                    var g = colorPixel.data[(width-z) * 4 + (depth * x * 4)+1];
+                    var b = colorPixel.data[(width-z) * 4 + (depth * x * 4)+2];
+                    var yValue = heightPixel.data[(width-z) * 4 + (depth * x * 4)] / heightOffset;
+                    colorRow.push([r,g,b]);
+                    heightRow.push(yValue);
 
                     var vertex = new THREE.Vector3(x * spacingX, yValue, z * spacingZ);
                     geom.vertices.push(vertex);
@@ -193,7 +219,8 @@ function createGeometryFromMap(ctx) {
                     //scene.add( temp );
 
                 }
-                heightMap.push(row);
+                colorMap.push(colorRow);
+                heightMap.push(heightRow);
             }
             // we create a rectangle between four vertices, and we do
             // that as two triangles.
@@ -210,8 +237,19 @@ function createGeometryFromMap(ctx) {
                     var d = (x + 1) + ((z + 1) * width);
                     var face1 = new THREE.Face3(a, b, d);
                     var face2 = new THREE.Face3(d, c, a);
-                    face1.color = calcColor(Math.floor(heightOffset*getHighPoint(geom, face1)));
-                    face2.color = calcColor(Math.floor(heightOffset*getHighPoint(geom, face2)));
+                    //face1.color = calcColor(Math.floor(heightOffset*getHighPoint(geom, face1)));
+                    //face2.color = calcColor(Math.floor(heightOffset*getHighPoint(geom, face2)));
+
+                    var color0=colorMap[z][x];
+                    var color1=colorMap[z+1][x];
+                    var color2=colorMap[z][x+1];
+                    var color3=colorMap[z+1][x+1];
+                    var red=Math.floor(color0[0]/4+color1[0]/4+color2[0]/4+color3[0]/4);
+                    var green=Math.floor(color0[1]/4+color1[1]/4+color2[1]/4+color3[1]/4);
+                    var blue=Math.floor(color0[2]/4+color1[2]/4+color2[2]/4+color3[2]/4);
+                    face1.color = new THREE.Color("rgb("+red+","+green+","+blue+")");
+                    face2.color = new THREE.Color("rgb("+red+","+green+","+blue+")");
+
                     geom.faces.push(face1);
                     geom.faces.push(face2);
                 }
