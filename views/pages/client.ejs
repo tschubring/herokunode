@@ -118,7 +118,7 @@ socket.on('clientState', function(data) {
       boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:pan, volume:vol, decays:true});
     }
     else{//drone
-      boats[ord].plasma.noiseMove({filter:800-800*(expo), q:2, time:.1, pan:pan, volume:vol/2, decays:false});
+      boats[ord].plasma.noiseMove({filter:800*vol, q:2, time:.1, pan:pan, volume:vol/2, decays:false});
     }
   }
   }//mute remote false
