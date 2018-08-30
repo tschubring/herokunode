@@ -81,10 +81,12 @@ socket.on('clientState', function(data) {
     if(rel>1){rel=1;}
     //dbug(rads/pi);
     var dist=Math.sqrt(dx*dx+dz*dz);
-    var frac=dist/750; // 0 to .5
+    var frac=dist/256; // 0 near  to 2.7 far
+    if(frac>1){frac=1;} // 0 to 1
     var expo=frac*frac;
-    var inv=1-expo; // 1 to .5
-    dbug(frac+"<br>"+expo+"<br>"+inv)
+    var inv=1-expo; // 1 to 0
+    var vol=inv;
+    dbug(frac+"<br>"+expo+"<br>"+inv);
     if(boats[ord].detonation>0){//explosion
       console.log(inv);
       boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:(.5-inv)/2, decays:true});
