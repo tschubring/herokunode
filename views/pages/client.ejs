@@ -280,6 +280,9 @@ function tick(){
     }
   }
   for (var c=0; c<culls.length; c++){
+    culls[c].motor.vco.stop();
+    culls[c].motor.output.disconnect();
+    culls[c].plasma.output.disconnect();
     var gone=boats.splice(culls[c],1)[0];
     scene.remove(gone.carYaw);
     scene.remove(gone.missileModel);
@@ -889,106 +892,6 @@ function render() {
   requestAnimationFrame(render);
 }
 
-/*
-function playSoundNum(num, ends){
-  var sound = new Sound(fxContext, fxBuffer.getSoundByIndex(num), ends);
-  sound.play();
-}
-function playSoundName(name){
-  playSoundNum(soundNumByName[name], false);
-}
-
-function setupSounds(path, soundNames){
-
-  var sounds=[];
-  for(var n=0; n<soundNames.length; n++){
-    var clean=soundNames[n].replace(".mp3", "");
-    soundNumByName[clean]=n;
-    sounds.push(path+soundNames[n]);
-  }
-  fxContext = new (window.AudioContext || window.webkitAudioContext)();
-
-  fxBuffer = new Buffer(fxContext, sounds);
-  fxBuffer.loadAll();
-
-}
-
-class Buffer {
-  constructor(context, urls) {  
-    this.context = context;
-    this.urls = urls;
-    this.buffer = [];
-  }
-
-  loadSound(url, index) {
-    let request = new XMLHttpRequest();
-    request.open('get', url, true);
-    request.responseType = 'arraybuffer';
-    let thisBuffer = this;
-    request.onload = function() {
-      thisBuffer.context.decodeAudioData(request.response, function(buffer) {
-        thisBuffer.buffer[index] = buffer;
-        updateProgress(thisBuffer.urls.length);
-        if(index == thisBuffer.urls.length-1) {
-          thisBuffer.loaded();
-        }       
-      });
-    };
-    request.send();
-  };
-
-  loadAll() {
-    this.urls.forEach((url, index) => {
-      this.loadSound(url, index);
-    })
-  }
-
-  loaded() {
-    // what happens when all the files are loaded
-  }
-
-  getSoundByIndex(index) {
-    return this.buffer[index];
-  }
-
-}
-
-class Sound {
-
-  constructor(context, buffer, ends) {
-    this.ends = ends;
-    this.context = context;
-    this.buffer = buffer;
-  }
-
-  init() {
-    this.gainNode = this.context.createGain();
-    this.source = this.context.createBufferSource();
-
-    this.source.buffer = this.buffer;
-    this.source.connect(this.gainNode);
-    this.gainNode.connect(this.context.destination);
-  }
-
-  play() {
-    this.init();
-    this.source.start(this.context.currentTime);
-    //console.log('uh '+this.buffer.duration);
-
-  }  
-
-  stop() {
-    this.gainNode.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + 0.5);
-    this.source.stop(this.context.currentTime + 0.5);
-  }
-
-}
-var fxContext;
-var fxBuffer;
-var soundNumByName={}
-  
-setupSounds("sounds/", ["go.mp3", "click.mp3", "bell.mp3"]);  
-*/
 
 function radsOfRise(rise){
   return pi/2-Math.atan2(1, rise);
