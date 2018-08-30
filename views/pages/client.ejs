@@ -37,7 +37,7 @@ function panPitchDxDz(pitch,dx,dz){
     var rel=((1000+pitch/pi)%2-(1000+targetRads/pi)%2)*2;
     if(rel<-1){rel=-1;}
     if(rel>1){rel=1;}
-    dbug(rel);
+    //dbug(rel);
   return rel;
 }
 console.log('client.ejs myRoomId='+myRoomId);
