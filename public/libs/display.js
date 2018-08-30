@@ -311,7 +311,7 @@ function worldAlt(worldX,worldZ){
   var z=Math.floor(worldZ+half-.5);
   var x=Math.floor(worldX+half-.5);
   //console.log(x+" "+z);
-  if((x<0)||(x>=useSize-1)||(z<0)||(z>=useSize-1)){return a;}
+  if((x<0)||(x>=useSize-2)||(z<0)||(z>=useSize-2)){return a;}
   var xFrac=(worldX+half-.5)-x; // excursion from nw
   var zFrac=(worldZ+half-.5)-z;
   var xInv=1-xFrac;
