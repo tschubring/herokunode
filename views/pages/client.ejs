@@ -37,7 +37,7 @@ function panPitchDxDz(pitch,dx,dz){
     var rel=((1000+pitch/pi)%2-(1000+targetRads/pi)%2)*2;
     if(rel<-1){rel=-1;}
     if(rel>1){rel=1;}
-    //dbug(rads/pi);
+    dbug(rel);
   return rel;
 }
 console.log('client.ejs myRoomId='+myRoomId);
@@ -213,7 +213,7 @@ function emitTick(){
     time:.1,
     pan:0,
     noise:.5,
-    volume:.3,
+    volume:.1,
     decays:false
   };
   boats[0].motor.toneMove(conf);
@@ -223,12 +223,12 @@ function emitTick(){
     var dz=boats[0].z-boats[0].missileZ;
     var vol=volDxDz(dx,dz);
     var pan=panPitchDxDz(boats[0].pitch, dx,dz);
-
+    
     if(boats[0].detonation>0){//explosion
-      boats[0].plasma.noiseMove({filter:0, q:.1, time:.35, pan:pan, volume:vol, decays:true});
+      boats[0].plasma.noiseMove({filter:0, q:.1, time:.35, pan:pan, volume:vol/2, decays:true});
     }
     else{//drone
-      boats[0].plasma.noiseMove({filter:800-800*(expo), q:2, time:.1, pan:pan, volume:vol/2, decays:false});
+      boats[0].plasma.noiseMove({filter:800*(vol), q:2, time:.1, pan:pan, volume:vol/4, decays:false});
     }
   }
   }//end mute
