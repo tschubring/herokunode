@@ -48,7 +48,6 @@ socket.on('clientState', function(data) {
       if(user.userId != myUserId){
         var ord=userIds.indexOf(user.userId);
         if(boats[ord].loaded){
-          
           boats[ord].updated=nowMs;
           boats[ord].iRads=user.iRads;
           boats[ord].control=user.control;
@@ -65,6 +64,63 @@ socket.on('clientState', function(data) {
           boats[ord].missileSpeed=user.missileSpeed;
           boats[ord].missileFired=user.missileFired;
           boats[ord].detonation=user.detonation;
+
+          // opponent sounds
+
+  if(muteRemote==false){
+  var freq=20+10*boats[ord].speed/.5;
+  if(Math.abs(boats[ord].throttle)==.5){freq=30+30*boats[ord].speed/.5;}
+  if(Math.abs(boats[ord].throttle)==1){freq=40+40*boats[ord].speed/1;}
+
+    var dx=boats[0].x-boats[ord].x;
+    var dz=boats[0].z-boats[ord].z;
+    targetRads=Math.atan2(dz, -dx);
+    var rel=((1000+boats[0].pitch/pi)%2-(1000+targetRads/pi)%2)*2;
+    if(rel<-1){rel=-1;}
+    if(rel>1){rel=1;}
+    //dbug(rads/pi);
+    var dist=Math.sqrt(dx*dx+dz*dz);
+    var frac=dist/750; // 0 to .5
+    var expo=Math.sin(pi*frac/2);
+    var inv=1-frac; // 1 to .5
+    if(boats[ord].detonation>0){//explosion
+      console.log(inv);
+      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:.5-inv, decays:true});
+    }
+
+
+    var conf={
+    frequency:freq,
+    filter:400+400*boats[ord].speed,
+    time:.1,
+    pan:rel,
+    noise:.5,
+    volume:inv,
+    decays:false
+  };
+  boats[ord].motor.toneMove(conf);
+
+  if(boats[ord].missileFired){
+    var dx=boats[0].x-boats[ord].missileX;
+    var dz=boats[0].z-boats[ord].missileZ;
+    targetRads=Math.atan2(dz, -dx);
+    var rel=((1000+boats[ord].pitch/pi)%2-(1000+targetRads/pi)%2)*2;
+    if(rel<-1){rel=-1;}
+    if(rel>1){rel=1;}
+    //dbug(rads/pi);
+    var dist=Math.sqrt(dx*dx+dz*dz);
+    var frac=dist/750; // 0 to .5
+    var expo=Math.sin(pi*frac/2);
+    var inv=1-frac; // 1 to .5
+    if(boats[ord].detonation>0){//explosion
+      console.log(inv);
+      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:inv, decays:true});
+    }
+    else{//drone
+      boats[ord].plasma.noiseMove({filter:800-800*(expo), q:2, time:.1, pan:rel, volume:.5-inv, decays:false});
+    }
+  }
+  }//mute remote false
         }
       }
     }
@@ -99,29 +155,10 @@ socket.on('clientState', function(data) {
         console.log('finish onload');
         islandFromSeeds(useSize, mySeeds);
         initScene();
+        frameTimeout=window.setInterval("frameTick()",1000)
         
       }
       finish.src = "finish.png";
-      
-/*
-      var pixel = heightCanvas.toDataURL();
-      console.log(typeof pixel);
-      myImage = new Image();
-      myImage.id="mapImage";
-      document.getElementById('hideMe').appendChild(myImage);
-      myImage.onload=function(){
-        console.log('myImage onload');
-        var heightCtx = heightCanvas.getContext('2d');
-        heightCtx.drawImage(myImage, 0, 0);
-        initScene();
-        
-      }
-      myImage.src = pixel;
-      myImage.onmousedown=function(){
-        startSim();
-      }
-*/
-      //initScene();
     }
   });
 var finish;
@@ -130,7 +167,13 @@ var saveMap="";
 var mapReceived=false;
 var sendTime=0;
 var tickTimeout;
-
+var frameInterval;
+var frames=0;
+var fps=0;
+function frameTick(){
+  fps=frames;
+  frames=0;
+}
 function emitTick(){
   window.clearTimeout(tickTimeout);
   //console.log('emitTick()');
@@ -159,39 +202,49 @@ function emitTick(){
   }  
   socket.emit("clientState", dataObj);  
 
-
+  if(muteSelf==false){
   var freq=20+10*boats[0].speed/.5;
   if(Math.abs(boats[0].throttle)==.5){freq=30+30*boats[0].speed/.5;}
   if(Math.abs(boats[0].throttle)==1){freq=40+40*boats[0].speed/1;}
-  if(boats[0].onGround){
-    boats[0].motor.pitchOn(freq, 400+400*boats[0].speed, .1, 0, .5, .5, false);
-  } else{
-    boats[0].motor.pitchOn(freq, 400+400*boats[0].speed, .1, 0, 0, .5, false);
-  }
+    var conf={
+    frequency:freq,
+    filter:400+400*boats[0].speed,
+    time:.1,
+    pan:0,
+    noise:.5,
+    volume:.3,
+    decays:false
+  };
+  boats[0].motor.toneMove(conf);
 
-/*
-  monotrons[0].noteOn(freq,.1, .1+Math.abs(boats[0].throttle*.5));
   if(boats[0].missileFired){
+    var dx=boats[0].x-boats[0].missileX;
+    var dz=boats[0].z-boats[0].missileZ;
+    targetRads=Math.atan2(dz, -dx);
+    var rel=((1000+boats[0].pitch/pi)%2-(1000+targetRads/pi)%2)*2;
+    if(rel<-1){rel=-1;}
+    if(rel>1){rel=1;}
+    //dbug(rads/pi);
+    var dist=Math.sqrt(dx*dx+dz*dz);
+    var frac=dist/750; // 0 to .5
+    var expo=Math.sin(pi*frac/2);
+    var inv=1-frac; // 1 to .5
     if(boats[0].detonation>0){//explosion
-      //monotrons[1].noteOn(30,0, 1);
+      console.log(inv);
+      boats[0].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:inv, decays:true});
     }
     else{//drone
-       var dx=boats[0].x-boats[0].missileX;
-       var dz=boats[0].z-boats[0].missileZ;
-       var dist=Math.sqrt(dx*dx+dz*dz);
-       var frac=dist/750; // 0 to .5
-       var expo=Math.sin(pi*frac/2);
-       console.log(expo);
-       var inv=1-frac; // 1 to .5
-       var wav=0*Math.sin(pi*dist);
-       monotrons[1].noteOn(800-800*(expo),.05, .5-expo);
+      boats[0].plasma.noiseMove({filter:800-800*(expo), q:2, time:.1, pan:rel, volume:.5-inv, decays:false});
     }
   }
-*/
+  }//end mute
+  //dbug(Math.floor(10*boats[0].pitch/pi)/10+"<br>"+Math.floor(10*targetRads/pi)/10+"<br>"+Math.floor(10*rel/pi)/10);
+
   tickTimeout=window.setTimeout("emitTick()", 100);
 }
-
-
+var muteSelf=false;
+var muteRemote=false;
+var targetRads=0;
 var detonationEnded=false;
 
 // begin copied from terrain2
@@ -350,7 +403,7 @@ function tick(){
             //console.log('detonation ended '+boats[b].missileFired);
             shouldDetonate=false;
             if(b==0){
-              ////monotrons[1].noteOff(.1);
+              //boats[b].plasma.noteOff(.1);
               ////window.setTimeout("monotrons[1].noteOff(.1)",100);
             }
 
@@ -430,7 +483,7 @@ function tick(){
       }
     }
   }
-  dbug(Math.floor(boats[0].speed*100));
+  dbug(Math.floor(boats[0].speed*100)+"<br />"+fps);
   //dbug("deltaY: "+Math.floor(boats[0].deltaY*100)/100);
   //dbuga("alt: "+Math.floor(boats[0].alt*100)/100);
   //dbuga("velY: "+Math.floor(boats[0].velY*100)/100);
@@ -509,7 +562,7 @@ function initScene() {
   newX=170*Math.cos(pi*deg/180);
   newZ=170*Math.sin(pi*deg/180);
   var newY=0;//worldAlt(newX,newZ);
-  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, onGround:true, velY:0, x:newX, z:newZ, y:newY, alt:newY, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*4,missileIrads:0, missileFired:false, detonation:0}));
+  boats.push(newBoat({num:0, userId:myUserId, loaded:false, local:true, onGround:true, velY:0, x:newX, z:newZ, y:newY, alt:newY, throttle:0, speed:0, pitch:0, iRads:0, control:0, missileX:0,missileY:0,missileZ:0,missileSpeed:maxSpeed*4 ,missileIrads:0, missileFired:false, detonation:0}));
 }
 function resumeInit(){
 
@@ -712,10 +765,10 @@ function handleToggle(key,value){
     if(value==true){
       if(boats[0].missileFired==false){
         boats[0].missileFired=true;
-
-       //monotrons[0].noteOn(1000-100*(1),0,1);
-       //boats[0].plasma.pitchOn(1000-100*(1), 1000, 2, 0, 1, 1, false);
-
+        //monotrons[0].noteOn(1000-100*(1),0,1);
+        if(muteSelf==false){
+          boats[0].plasma.noiseMove({filter:1000, q:2, time:.1, pan:0, volume:1, decays:false});
+        }
       }
       else{
         shouldDetonate=true;
@@ -837,6 +890,7 @@ function render() {
   }
 
   tick();
+  frames++;
   renderer.render(scene, camera);
   requestAnimationFrame(render);
 }

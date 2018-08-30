@@ -47,8 +47,8 @@ function newBoat(conf){
 
 
 
-  if(conf.num==0){conf.motor=returnMonotronInstance(true);}
-  //conf.plasma=returnMonotronInstance(true);
+    conf.motor=returnMonotronInstance({noise:false});
+    conf.plasma=returnMonotronInstance({noise:true});
 
        var loader = new THREE.OBJLoader();
        loader.load('libs/airboat.obj',  function ( object ) {
