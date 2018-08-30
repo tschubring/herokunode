@@ -164,7 +164,11 @@ function islandFromSeeds(across, seeds){
         if(((y>75)&&(y<95))||((y>415)&&(y<435))){
           val=6*(15-Math.abs(x-255));
           heightCtx.fillStyle="rgb("+val+","+val+","+val+")";
-          colorCtx.fillStyle="rgb(255,0,0)";
+          if(Math.floor(x/4+y/4)%2==1){
+            colorCtx.fillStyle="rgb(255,0,0)";
+          }else{
+            colorCtx.fillStyle="rgb(255,255,255)";
+          }
         }
       }
 
