@@ -101,7 +101,7 @@ socket.on('clientState', function(data) {
     time:.1,
     pan:pan,
     noise:.5,
-    volume:vol,
+    volume:vol/2,
     decays:false
   };
   boats[ord].motor.toneMove(conf);
