@@ -101,7 +101,7 @@ socket.on('clientState', function(data) {
     time:.1,
     pan:pan,
     noise:.5,
-    volume:inv,
+    volume:vol,
     decays:false
   };
   boats[ord].motor.toneMove(conf);
@@ -114,7 +114,7 @@ socket.on('clientState', function(data) {
 
 
     if(boats[ord].detonation>0){//explosion
-      console.log(inv);
+      console.log(vol);
       boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:pan, volume:vol, decays:true});
     }
     else{//drone
