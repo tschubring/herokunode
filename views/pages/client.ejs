@@ -91,8 +91,8 @@ socket.on('clientState', function(data) {
 
     var dx=boats[0].x-boats[ord].x;
     var dz=boats[0].z-boats[ord].z;
-    var vol=volDxDz(dx,dy);
-    var pan=panPitchDxDz(boats[0].pitch,dx,dy);
+    var vol=volDxDz(dx,dz);
+    var pan=panPitchDxDz(boats[0].pitch,dx,dz);
 
 
     var conf={
@@ -109,8 +109,8 @@ socket.on('clientState', function(data) {
   if(boats[ord].missileFired){
     var dx=boats[0].x-boats[ord].missileX;
     var dz=boats[0].z-boats[ord].missileZ;
-    var vol=volDxDz(dx,dy);
-    var pan=panPitchDxDz(boats[0].pitch,dx,dy);
+    var vol=volDxDz(dx,dz);
+    var pan=panPitchDxDz(boats[0].pitch,dx,dz);
 
 
     if(boats[ord].detonation>0){//explosion
