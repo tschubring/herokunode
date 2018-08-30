@@ -445,8 +445,8 @@ function tick(){
             shouldDetonate=false;
             boats[b].detonation=1
             if(b>0){
-    var dx=boats[0].x-boats[ord].missileX;
-    var dz=boats[0].z-boats[ord].missileZ;
+    var dx=boats[0].x-boats[b].missileX;
+    var dz=boats[0].z-boats[b].missileZ;
     var vol=volDxDz(dx,dz);
     var pan=panPitchDxDz(boats[0].pitch,dx,dz);
 
