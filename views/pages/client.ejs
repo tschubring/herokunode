@@ -23,7 +23,23 @@ var myRoomId=181;
 var myUserId=<%= rows[0].id %>;
 var socket = io.connect();
 var myImage;
-  
+function volDxDz(dx,dz){
+    var dist=Math.sqrt(dx*dx+dz*dz);
+    var frac=dist/256; // 0 near  to 2.7 far
+    if(frac>1){frac=1;} // 0 to 1
+    var inv=1-frac; // 1 to 0
+       var expo=inv*inv;
+    return expo;
+}
+
+function panPitchDxDz(pitch,dx,dz){
+    var targetRads=Math.atan2(dz, -dx);
+    var rel=((1000+pitch/pi)%2-(1000+targetRads/pi)%2)*2;
+    if(rel<-1){rel=-1;}
+    if(rel>1){rel=1;}
+    //dbug(rads/pi);
+  return rel;
+}
 console.log('client.ejs myRoomId='+myRoomId);
 
 socket.emit("subscribeClient", { roomId: myRoomId, userId: myUserId, clientMs:new Date().getTime()});
@@ -75,22 +91,8 @@ socket.on('clientState', function(data) {
 
     var dx=boats[0].x-boats[ord].x;
     var dz=boats[0].z-boats[ord].z;
-    targetRads=Math.atan2(dz, -dx);
-    var rel=((1000+boats[0].pitch/pi)%2-(1000+targetRads/pi)%2)*2;
-    if(rel<-1){rel=-1;}
-    if(rel>1){rel=1;}
-    //dbug(rads/pi);
-    var dist=Math.sqrt(dx*dx+dz*dz);
-    var frac=dist/256; // 0 near  to 2.7 far
-    if(frac>1){frac=1;} // 0 to 1
-    var expo=frac*frac;
-    var inv=1-expo; // 1 to 0
-    var vol=inv;
-    dbug(frac+"<br>"+expo+"<br>"+inv);
-    if(boats[ord].detonation>0){//explosion
-      console.log(inv);
-      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:(.5-inv)/2, decays:true});
-    }
+    var vol=volDxDy(dx,dy);
+    var pan=panPitchDxDz(boats[0].pitch,dx,dy);
 
 
     var conf={
@@ -107,21 +109,16 @@ socket.on('clientState', function(data) {
   if(boats[ord].missileFired){
     var dx=boats[0].x-boats[ord].missileX;
     var dz=boats[0].z-boats[ord].missileZ;
-    targetRads=Math.atan2(dz, -dx);
-    var rel=((1000+boats[ord].pitch/pi)%2-(1000+targetRads/pi)%2)*2;
-    if(rel<-1){rel=-1;}
-    if(rel>1){rel=1;}
-    //dbug(rads/pi);
-    var dist=Math.sqrt(dx*dx+dz*dz);
-    var frac=dist/750; // 0 to .5
-    var expo=Math.sin(pi*frac/2);
-    var inv=1-frac; // 1 to .5
+    var vol=volDxDy(dx,dy);
+    var pan=panPitchDxDz(boats[0].pitch,dx,dy);
+
+
     if(boats[ord].detonation>0){//explosion
       console.log(inv);
-      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:(.5-inv)/2, decays:true});
+      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:pan, volume:vol, decays:true});
     }
     else{//drone
-      boats[ord].plasma.noiseMove({filter:800-800*(expo), q:2, time:.1, pan:rel, volume:.5-inv, decays:false});
+      boats[ord].plasma.noiseMove({filter:800-800*(expo), q:2, time:.1, pan:pan, volume:vol/2, decays:false});
     }
   }
   }//mute remote false
