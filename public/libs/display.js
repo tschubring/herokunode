@@ -83,6 +83,10 @@ function dbug(str){
   document.getElementById('debug').style.display="block";
   document.getElementById('debug').innerHTML=str;
 }
+function dbug2(str){
+  document.getElementById('debug2').style.display="block";
+  document.getElementById('debug2').innerHTML=str;
+}
 function dbuga(str){
   document.getElementById('debug').innerHTML+='<br />'+str;
 }
