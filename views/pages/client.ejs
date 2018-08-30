@@ -280,9 +280,9 @@ function tick(){
     }
   }
   for (var c=0; c<culls.length; c++){
-    culls[c].motor.vco.stop();
-    culls[c].motor.output.disconnect();
-    culls[c].plasma.output.disconnect();
+    boats[culls[c]].motor.vco.stop();
+    boats[culls[c]].motor.output.disconnect();
+    boats[culls[c]].plasma.output.disconnect();
     var gone=boats.splice(culls[c],1)[0];
     scene.remove(gone.carYaw);
     scene.remove(gone.missileModel);
@@ -444,6 +444,14 @@ function tick(){
 
             shouldDetonate=false;
             boats[b].detonation=1
+            if(b>0){
+    var dx=boats[0].x-boats[ord].missileX;
+    var dz=boats[0].z-boats[ord].missileZ;
+    var vol=volDxDz(dx,dz);
+    var pan=panPitchDxDz(boats[0].pitch,dx,dz);
+
+              boats[b].plasma.noiseMove({filter:1000, q:2, time:.5, pan:pan, volume:vol, decays:true});
+            }
             for (var t=0; t<boats.length; t++){
               if(t !=b){
                 var dx=boats[t].x-boats[b].missileX;
