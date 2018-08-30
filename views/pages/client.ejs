@@ -82,11 +82,12 @@ socket.on('clientState', function(data) {
     //dbug(rads/pi);
     var dist=Math.sqrt(dx*dx+dz*dz);
     var frac=dist/750; // 0 to .5
-    var expo=Math.sin(pi*frac/2);
-    var inv=1-frac; // 1 to .5
+    var expo=frac*frac;
+    var inv=1-expo; // 1 to .5
+    dbug(frac+"<br>"+expo+"<br>"+inv)
     if(boats[ord].detonation>0){//explosion
       console.log(inv);
-      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:.5-inv, decays:true});
+      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:(.5-inv)/2, decays:true});
     }
 
 
@@ -115,7 +116,7 @@ socket.on('clientState', function(data) {
     var inv=1-frac; // 1 to .5
     if(boats[ord].detonation>0){//explosion
       console.log(inv);
-      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:inv, decays:true});
+      boats[ord].plasma.noiseMove({filter:0, q:.1, time:.35, pan:rel, volume:(.5-inv)/2, decays:true});
     }
     else{//drone
       boats[ord].plasma.noiseMove({filter:800-800*(expo), q:2, time:.1, pan:rel, volume:.5-inv, decays:false});
@@ -484,7 +485,7 @@ function tick(){
       }
     }
   }
-  dbug(Math.floor(boats[0].speed*100)+"<br />"+fps);
+  ////dbug(Math.floor(boats[0].speed*100)+"<br />"+fps);
   //dbug("deltaY: "+Math.floor(boats[0].deltaY*100)/100);
   //dbuga("alt: "+Math.floor(boats[0].alt*100)/100);
   //dbuga("velY: "+Math.floor(boats[0].velY*100)/100);
